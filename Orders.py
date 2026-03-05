@@ -134,7 +134,7 @@ footer {visibility:hidden;}
     /* Smaller logo */
     img{
         max-width:150px !important;
-        margin-left: 100px;
+        margin-left: 120px;
     }
 
 }
@@ -397,6 +397,7 @@ st.markdown("""
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
