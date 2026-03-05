@@ -388,17 +388,30 @@ if submit_button:
 # -----------------------------
 # New Order
 # -----------------------------
+# -----------------------------
+# New Order
+# -----------------------------
 if st.button("➕ New Order"):
 
+    # Reset rice item count
     st.session_state.rice_items = 2
-    st.session_state["shop_name"] = ""
-    st.session_state["contact_number"] = ""
 
-    for i in range(10):
-        st.session_state[f"variety_{i}"] = ""
-        st.session_state[f"custom_variety_{i}"] = ""
-        st.session_state[f"qty_{i}"] = 0.0
-        st.session_state[f"price_{i}"] = 0.0
+    # Collect keys to delete
+    keys_to_delete = []
+
+    for key in st.session_state.keys():
+
+        if key.startswith("variety_") \
+        or key.startswith("custom_variety_") \
+        or key.startswith("qty_") \
+        or key.startswith("price_") \
+        or key in ["shop_name", "contact_number"]:
+
+            keys_to_delete.append(key)
+
+    # Delete them
+    for key in keys_to_delete:
+        del st.session_state[key]
 
     st.rerun()
 
@@ -410,6 +423,7 @@ st.markdown("""
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
