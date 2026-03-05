@@ -257,7 +257,7 @@ with st.form("order_form"):
     # Buttons
     add_more = st.form_submit_button("➕ Add Another Rice Variety")
 
-    col1,col2,col3 = st.columns([1,2,1])
+    col1,col2,col3 = st.columns([1.9,2,1])
     with col2:
         submit_button = st.form_submit_button("Submit Order")
             
@@ -388,6 +388,7 @@ st.markdown("""
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
