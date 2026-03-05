@@ -257,9 +257,8 @@ with st.form("order_form"):
     # Buttons
     add_more = st.form_submit_button("➕ Add Another Rice Variety")
 
-    col1, col2, col3 = st.columns([5,1,1])
-
-    with col3:
+    col1,col2,col3 = st.columns([1,2,1])
+    with col2:
         submit_button = st.form_submit_button("Submit Order")
             
 
