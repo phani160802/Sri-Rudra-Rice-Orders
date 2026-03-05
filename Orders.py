@@ -11,9 +11,8 @@ st.set_page_config(page_title="Sri Rudra Rice Order Form", layout="wide")
 # -----------------------------
 st.markdown("""
 <style>
-<style>
 
-/* Remove streamlit top header space */
+/* Remove streamlit header */
 header {visibility: hidden;}
 [data-testid="stToolbar"] {display: none;}
 [data-testid="stDecoration"] {display: none;}
@@ -23,25 +22,20 @@ header {visibility: hidden;}
     padding-top:2rem !important;
     padding-bottom:0rem !important;
 }
-            
-/* Optional: tighten logo area */
-.logo-center{
-    margin-top:-40px;
-}
 
 /* Background */
 .stApp {
     background: linear-gradient(135deg,#f9f6e7,#DDC57A);
 }
 
-/* Reduce top spacing */
+/* Main container */
 .main .block-container{
     max-width:1000px;
     padding-top:0.1rem;
     padding-bottom:0rem;
 }
 
-/* Card style form */
+/* Form card */
 div[data-testid="stForm"]{
     background:white;
     padding:20px;
@@ -60,11 +54,6 @@ h1{
 h3{
     text-align:left;
     color:#6B5B2A;
-}
-
-/* Item headers */
-h4{
-    text-align:left;
 }
 
 /* Inputs */
@@ -89,6 +78,7 @@ h4{
 .stButton>button:hover,
 .stFormSubmitButton>button:hover{
     background:#B89C4C;
+    color:black;
 }
 
 /* Move submit button slightly right */
@@ -112,14 +102,47 @@ div[data-testid="stForm"] .stFormSubmitButton{
     color:#4A3F1C;
 }
 
-/* Remove space below footer */
+/* Remove streamlit footer */
 footer {visibility:hidden;}
+
+/* ----------------------------- */
+/* MOBILE FIXES */
+/* ----------------------------- */
+
+@media (max-width:768px){
+
+    /* Fix white text issue */
+    body, label, span, p, div {
+        color:#2b2b2b !important;
+    }
+
+    /* Reduce side padding */
+    .block-container{
+        padding-left:12px !important;
+        padding-right:12px !important;
+    }
+
+    /* Mobile titles */
+    h1{
+        font-size:26px !important;
+    }
+
+    h3{
+        font-size:18px !important;
+    }
+
+    /* Smaller logo */
+    img{
+        max-width:150px !important;
+    }
+
+}
 
 </style>
 """, unsafe_allow_html=True)
 
 # -----------------------------
-# Predefined rice varieties
+# Rice Varieties
 # -----------------------------
 rice_varieties = ["HMT", "BPT", "JSR", "Broken", "Other"]
 
@@ -143,29 +166,33 @@ items_sheet = spreadsheet.worksheet("Order_Items")
 summary_sheet = spreadsheet.worksheet("Orders_Summary")
 
 # -----------------------------
-# Session State Initialization
+# Session State
 # -----------------------------
 if "rice_items" not in st.session_state:
     st.session_state.rice_items = 2
 
 # -----------------------------
-# Logo (Centered)
+# Logo
 # -----------------------------
 st.markdown("<div style='padding-top:20px'></div>", unsafe_allow_html=True)
 
 col1, col2, col3 = st.columns([1.9,2,1])
 
 with col2:
-    st.image("logo.PNG", width=200)
+    st.image("logo.png", width=200)
 
 # -----------------------------
 # Title
 # -----------------------------
 st.markdown(
-"<h1 style='text-align:center; margin-left:45px;'>Sri Rudra Rice 🔱</h1>",
+"<h1 style='text-align:center;'>Sri Rudra Rice 🌾</h1>",
 unsafe_allow_html=True
 )
-st.markdown("<h3 style='text-align:center;'>Rice Order Management Portal</h3>", unsafe_allow_html=True)
+
+st.markdown(
+"<h3 style='text-align:center;'>Rice Order Management Portal</h3>",
+unsafe_allow_html=True
+)
 
 st.markdown("---")
 
@@ -254,16 +281,14 @@ with st.form("order_form"):
 
     st.markdown("---")
 
-    # Buttons
     add_more = st.form_submit_button("➕ Add Another Rice Variety")
 
-    col1,col2,col3 = st.columns([1.9,2,1])
+    col1,col2,col3 = st.columns([1,2,1])
     with col2:
         submit_button = st.form_submit_button("Submit Order")
-            
 
 # -----------------------------
-# Add Another Rice Variety
+# Add More Items
 # -----------------------------
 if add_more:
     st.session_state.rice_items += 1
@@ -291,12 +316,6 @@ if submit_button:
     except:
         order_id = "1"
 
-    if not items_sheet.row_values(1):
-        items_sheet.append_row([
-            "Date","Order ID","Shop Name","Phone",
-            "Variety","Quantity","Price","Item Total"
-        ])
-
     for item in valid_items:
 
         items_sheet.append_row([
@@ -312,12 +331,6 @@ if submit_button:
 
     total_quantity = sum(item["quantity"] for item in valid_items)
 
-    if not summary_sheet.row_values(1):
-        summary_sheet.append_row([
-            "Date","Order ID","Shop Name",
-            "Total Quantity(QTL)","Grand Total"
-        ])
-
     summary_sheet.append_row([
         today_date,
         order_id,
@@ -326,9 +339,7 @@ if submit_button:
         grand_total
     ], value_input_option="USER_ENTERED")
 
-    # -----------------------------
-    # WhatsApp Message
-    # -----------------------------
+    # WhatsApp message
     phone = "".join(filter(str.isdigit, contact_number))
 
     if len(phone) == 10:
@@ -365,21 +376,18 @@ if submit_button:
 # -----------------------------
 if st.button("➕ New Order"):
 
-    # Reset number of rice items
     st.session_state.rice_items = 2
-
-    # Reset shop details
     st.session_state["shop_name"] = ""
     st.session_state["contact_number"] = ""
 
-    # Reset rice item inputs
-    for i in range(10):   # safe upper limit
+    for i in range(10):
         st.session_state[f"variety_{i}"] = ""
         st.session_state[f"custom_variety_{i}"] = ""
         st.session_state[f"qty_{i}"] = 0.0
         st.session_state[f"price_{i}"] = 0.0
 
     st.rerun()
+
 # -----------------------------
 # Footer
 # -----------------------------
@@ -388,8 +396,3 @@ st.markdown("""
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
-
-
-
-
-
