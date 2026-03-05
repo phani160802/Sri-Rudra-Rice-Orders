@@ -112,7 +112,12 @@ footer {visibility:hidden;}
 @media (max-width:768px){
 
     /* Fix white text issue */
-    body, label, span, p, div {
+    body, label, span, p {
+        color:#2b2b2b !important;
+    }
+
+    /* Fix dropdown text */
+    div[data-baseweb="select"] span{
         color:#2b2b2b !important;
     }
 
@@ -397,6 +402,7 @@ st.markdown("""
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
