@@ -156,7 +156,7 @@ st.markdown("<div style='padding-top:20px'></div>", unsafe_allow_html=True)
 col1, col2, col3 = st.columns([1.9,2,1])
 
 with col2:
-    st.image("logo.png", width=200)
+    st.image("logo.PNG", width=200)
 
 # -----------------------------
 # Title
@@ -387,3 +387,4 @@ st.markdown("""
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
+
