@@ -297,7 +297,7 @@ with st.form("order_form"):
 
     add_more = st.form_submit_button("➕ Add Another Rice Variety")
 
-    col1,col2,col3 = st.columns([1,2,1])
+    col1,col2,col3 = st.columns([1.9,2,1])
     with col2:
         submit_button = st.form_submit_button("Submit Order")
 
@@ -372,7 +372,7 @@ if submit_button:
         )
 
     message_lines.append(f"Grand Total: ₹ {grand_total:,.2f}")
-    message_lines.append("Thank you, Sri Rudra Rice 🌾")
+    message_lines.append("Thank you for choosing Sri Rudra Rice 🔱")
 
     message = "\n".join(message_lines)
     encoded_msg = urllib.parse.quote(message)
@@ -383,7 +383,7 @@ if submit_button:
         f"✅ Order Confirmed! Order ID: {order_id} | Grand Total: ₹ {grand_total:,.2f}"
     )
 
-    st.markdown(f"[📱 Open WhatsApp with Order]({whatsapp_link})")
+    st.markdown(f"[📱 Send Whatsapp Confirmation]({whatsapp_link})")
 
 # -----------------------------
 # New Order
@@ -420,9 +420,10 @@ if st.button("➕ New Order"):
 # -----------------------------
 st.markdown("""
 <div class="footer">
-Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
+Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India.
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
