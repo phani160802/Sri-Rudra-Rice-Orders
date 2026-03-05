@@ -162,7 +162,7 @@ with col2:
 # Title
 # -----------------------------
 st.markdown(
-"<h1 style='text-align:center; margin-left:45px;'>Sri Rudra Rice 🌾</h1>",
+"<h1 style='text-align:center; margin-left:45px;'>Sri Rudra Rice 🔱</h1>",
 unsafe_allow_html=True
 )
 st.markdown("<h3 style='text-align:center;'>Rice Order Management Portal</h3>", unsafe_allow_html=True)
@@ -388,6 +388,7 @@ st.markdown("""
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
