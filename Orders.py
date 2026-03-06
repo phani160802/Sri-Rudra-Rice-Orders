@@ -221,13 +221,6 @@ st.image("logo.PNG", width=200)
 st.markdown("<h1>Sri Rudra Rice 🌾</h1>", unsafe_allow_html=True)
 st.markdown("<h3>Rice Order Management Portal</h3>", unsafe_allow_html=True)
 
-# Simplified Image Call (No need for the extra <div> wrapper anymore)
-st.image("logo.PNG", width=200)
-
-
-st.markdown("<h1>Sri Rudra Rice 🌾</h1>",unsafe_allow_html=True)
-st.markdown("<h3>Rice Order Management Portal</h3>",unsafe_allow_html=True)
-
 st.markdown("---")
 
 # -----------------------------
@@ -459,6 +452,7 @@ st.markdown("""
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
