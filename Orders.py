@@ -186,17 +186,24 @@ if "rice_items" not in st.session_state:
 # -----------------------------
 # Logo
 # -----------------------------
-st.image("logo.PNG", width=200)
 st.markdown(
 """
 <style>
-[data-testid="stImage"]{
-    text-align:center;
+.logo-center{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    margin-top:10px;
 }
 </style>
 """,
 unsafe_allow_html=True
 )
+
+st.markdown('<div class="logo-center">', unsafe_allow_html=True)
+st.image("logo.PNG", width=200)
+st.markdown('</div>', unsafe_allow_html=True)
+
 
 st.markdown("<h1>Sri Rudra Rice 🌾</h1>",unsafe_allow_html=True)
 st.markdown("<h3>Rice Order Management Portal</h3>",unsafe_allow_html=True)
@@ -432,6 +439,7 @@ st.markdown("""
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
