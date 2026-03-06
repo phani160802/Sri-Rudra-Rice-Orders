@@ -235,7 +235,7 @@ st.markdown(
         text-align: center;
         width: 100%;
         /* ADJUST THIS VALUE: Increase 2% to move it further right */
-        margin-left: 2%; 
+        margin-left: 5%; 
         margin-top: -10px;
     }
     
@@ -498,6 +498,7 @@ st.markdown("""
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
