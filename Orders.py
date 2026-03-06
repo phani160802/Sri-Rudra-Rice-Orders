@@ -230,9 +230,53 @@ if "rice_items" not in st.session_state:
 # -----------------------------
 # Logo
 # -----------------------------
-col1, col2, col3 = st.columns([1.2,1,1])
+
+# Logo Alignment
+st.markdown(
+    """
+    <style>
+    /* Target the specific container for the image */
+    [data-testid="stImage"] {
+        text-align: center !important;
+        display: block !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
+
+    [data-testid="stImage"] img {
+    display:block !important;
+    margin-left:auto !important;
+    margin-right:auto !important;
+    }
+    
+    /* MOBILE FIX */
+    @media (max-width:768px){
+        [data-testid="stImage"] img{
+            max-width:150px !important;
+            margin-left:120px !important;
+            margin-right:0 !important;
+        }
+    }
+
+    /* Force the headers to center relative to the whole page */
+    .main-header {
+        text-align: center;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# Use columns to create a "Center Slot" - this is the most reliable way in Wide Mode
+col1, col2, col3 = st.columns([1.2, 1, 1])
 with col2:
     st.image("logo.PNG", width=200)
+
+
 
 # Header Text
 st.markdown("""
@@ -373,4 +417,5 @@ st.markdown("""
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
+
 
