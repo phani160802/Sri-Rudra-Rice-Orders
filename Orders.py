@@ -183,14 +183,8 @@ existing_shops = sorted(shop_phone.keys())
 if "rice_items" not in st.session_state:
     st.session_state.rice_items = 2
 
-# -----------------------------
-# Logo
-# -----------------------------
-# FIXED Logo & Header Section
-# -----------------------------
-# -----------------------------
-# MANUAL ALIGNMENT FIX
-# -----------------------------
+
+# Logo Alignment
 st.markdown(
     """
     <style>
@@ -231,8 +225,49 @@ with col2:
     st.image("logo.PNG", width=200)
 
 # Header Text
-st.markdown('<div class="main-header"><h1>Sri Rudra Rice 🌾</h1><h3>Rice Order Management Portal</h3></div>', unsafe_allow_html=True)
-st.markdown("---")
+# -----------------------------
+# CENTERED & NUDGED HEADER
+# -----------------------------
+st.markdown(
+    """
+    <style>
+    .brand-container {
+        text-align: center;
+        width: 100%;
+        /* ADJUST THIS VALUE: Increase 2% to move it further right */
+        margin-left: 2%; 
+        margin-top: -10px;
+    }
+    
+    .brand-title {
+        color: #8B6F2F;
+        font-size: 42px !important;
+        font-weight: bold;
+        margin-bottom: 0px;
+    }
+    
+    .brand-subtitle {
+        color: #6B5B2A;
+        font-size: 20px !important;
+        margin-top: 0px;
+        margin-bottom: 20px;
+    }
+
+    /* Keep it centered on mobile */
+    @media (max-width: 768px) {
+        .brand-container {
+            margin-left: 0% !important;
+        }
+    }
+    </style>
+    
+    <div class="brand-container">
+        <div class="brand-title">Sri Rudra Rice 🌾</div>
+        <div class="brand-subtitle">Rice Order Management Portal</div>
+    </div>
+    """, 
+    unsafe_allow_html=True
+)
 
 # -----------------------------
 # Shop Details (Outside form for autofill)
@@ -463,6 +498,7 @@ st.markdown("""
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
