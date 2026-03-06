@@ -242,6 +242,9 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+
+st.markdown("----")
+
 # -----------------------------
 # Shop Details
 # -----------------------------
@@ -370,3 +373,4 @@ st.markdown("""
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
+
