@@ -194,7 +194,7 @@ st.markdown(
     /* If the above still fails on wide screens, this manual nudge usually wins */
     [data-testid="stImage"] img {
         display: block !important;
-        margin-left: auto !important;
+        margin-left: 120px !important;
         margin-right: auto !important;
         /* Manual fallback for wide layout */
         position: relative;
@@ -489,6 +489,7 @@ st.markdown("""
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
