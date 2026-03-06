@@ -187,27 +187,27 @@ if "rice_items" not in st.session_state:
 # Logo
 # -----------------------------
 # -----------------------------
-# FIXED Logo & Header Section
+# TOTAL CENTER FIX
 # -----------------------------
 st.markdown(
     """
     <style>
-    /* Target the specific container that holds the image */
-    [data-testid="stImageContainer"] {
-        display: flex;
-        justify-content: center;
-    }
-    
-    /* Ensure the image doesn't align left within its own box */
+    /* 1. Target the image container directly */
     [data-testid="stImage"] {
-        margin-left: auto;
-        margin-right: auto;
-        text-align: center;
+        display: flex !important;
+        justify-content: center !important;
     }
 
-    /* Force headers to center and stay centered */
-    h1, h3 {
-        text-align: center !important;
+    /* 2. Target the parent div to ensure it takes full width */
+    [data-testid="stImage"] > div {
+        width: fit-content !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
+
+    /* 3. Ensure the title and subtitle are truly centered */
+    .centered-text {
+        text-align: center;
         width: 100%;
     }
     </style>
@@ -215,11 +215,12 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Call the image directly (no extra manual <div> needed)
+# Display the logo
 st.image("logo.PNG", width=200)
 
-st.markdown("<h1>Sri Rudra Rice 🌾</h1>", unsafe_allow_html=True)
-st.markdown("<h3>Rice Order Management Portal</h3>", unsafe_allow_html=True)
+# Use a div wrapper for the text to ensure CSS grabs it
+# st.markdown("<h1>Sri Rudra Rice 🌾</h1>", unsafe_allow_html=True)
+st.markdown('<div class="centered-text"><h1>Sri Rudra Rice 🌾</h1><h3>Rice Order Management Portal</h3></div>', unsafe_allow_html=True)
 
 st.markdown("---")
 
@@ -452,6 +453,7 @@ st.markdown("""
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
