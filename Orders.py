@@ -186,28 +186,40 @@ if "rice_items" not in st.session_state:
 # -----------------------------
 # Logo
 # -----------------------------
+# -----------------------------
+# FIXED Logo & Header Section
+# -----------------------------
 st.markdown(
     """
     <style>
-    /* Target the specific Streamlit Image Container */
-    [data-testid="stImage"] {
-        display: flex !important;
-        justify-content: center !important;
-        width: 100% !important;
+    /* Target the specific container that holds the image */
+    [data-testid="stImageContainer"] {
+        display: flex;
+        justify-content: center;
     }
     
-    /* Ensure the image itself doesn't exceed its bounds */
-    [data-testid="stImage"] img {
-        margin: 0 auto;
+    /* Ensure the image doesn't align left within its own box */
+    [data-testid="stImage"] {
+        margin-left: auto;
+        margin-right: auto;
+        text-align: center;
     }
 
+    /* Force headers to center and stay centered */
     h1, h3 {
         text-align: center !important;
+        width: 100%;
     }
     </style>
     """,
     unsafe_allow_html=True
 )
+
+# Call the image directly (no extra manual <div> needed)
+st.image("logo.PNG", width=200)
+
+st.markdown("<h1>Sri Rudra Rice 🌾</h1>", unsafe_allow_html=True)
+st.markdown("<h3>Rice Order Management Portal</h3>", unsafe_allow_html=True)
 
 # Simplified Image Call (No need for the extra <div> wrapper anymore)
 st.image("logo.PNG", width=200)
@@ -447,6 +459,7 @@ st.markdown("""
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
