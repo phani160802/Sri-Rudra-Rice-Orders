@@ -55,6 +55,49 @@ border-radius:15px;
 box-shadow:0px 5px 25px rgba(0,0,0,0.08);
 }
 
+@media (max-width:768px){
+
+    /* Fix white text issue */
+    body, label, span, p {
+        color:#2b2b2b !important;
+    }
+
+    /* Fix dropdown text */
+    div[data-baseweb="select"] span{
+        color:#2b2b2b !important;
+    }
+
+    /* Reduce side padding */
+    .block-container{
+        padding-left:12px !important;
+        padding-right:12px !important;
+    }
+
+    /* Mobile titles */
+    h1{
+        font-size:26px !important;
+    }
+
+    h3{
+        font-size:18px !important;
+    }
+
+    /* Smaller logo */
+    img{
+        max-width:150px !important;
+        margin-left: 120px;
+    }
+    /* Fix metric text color */
+    [data-testid="stMetricValue"]{
+        color:#000000 !important;
+    }
+    
+    [data-testid="stMetricLabel"]{
+        color:#2b2b2b !important;
+    }
+
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -354,3 +397,4 @@ st.markdown("""
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
+
