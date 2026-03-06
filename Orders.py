@@ -188,52 +188,50 @@ if "rice_items" not in st.session_state:
 # -----------------------------
 # FIXED Logo & Header Section
 # -----------------------------
+# -----------------------------
+# MANUAL ALIGNMENT FIX
+# -----------------------------
 st.markdown(
     """
     <style>
-    /* 1. Force the Streamlit Image container to behave as a full-width flexbox */
+    /* Target the specific container for the image */
     [data-testid="stImage"] {
-        display: flex !important;
-        justify-content: center !important;
-        align-items: center !important;
-        width: 100% !important;
-    }
-
-    /* 2. Remove default padding/margin that Streamlit adds to images */
-    [data-testid="stImage"] > img {
-        margin: 0 auto !important;
+        text-align: center !important;
         display: block !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
     }
 
-    /* 3. Center the text headers and ensure they occupy 100% width */
-    .header-container {
+    /* If the above still fails on wide screens, this manual nudge usually wins */
+    [data-testid="stImage"] img {
+        display: block !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        /* Manual fallback for wide layout */
+        position: relative;
+        left: 0%; 
+    }
+
+    /* Force the headers to center relative to the whole page */
+    .main-header {
         text-align: center;
         width: 100%;
-        margin-bottom: 20px;
-    }
-    
-    h1, h3 {
-        margin: 0 !important;
-        padding: 5px 0 !important;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     }
     </style>
     """,
     unsafe_allow_html=True
 )
 
-# Render the image
-st.image("logo.PNG", width=200)
+# Use columns to create a "Center Slot" - this is the most reliable way in Wide Mode
+col1, col2, col3 = st.columns([1, 1, 1])
+with col2:
+    st.image("logo.PNG", width=200)
 
-# Render the text headers in a centered div
-st.markdown(
-    """
-    <div class="header-container">
-        <h1>Sri Rudra Rice 🌾</h1>
-        <h3>Rice Order Management Portal</h3>
-    </div>
-    """, 
-    unsafe_allow_html=True
-)
+# Header Text
+st.markdown('<div class="main-header"><h1>Sri Rudra Rice 🌾</h1><h3>Rice Order Management Portal</h3></div>', unsafe_allow_html=True)
 st.markdown("---")
 
 # -----------------------------
@@ -465,6 +463,7 @@ st.markdown("""
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
