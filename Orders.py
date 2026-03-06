@@ -100,7 +100,7 @@ box-shadow:0px 5px 25px rgba(0,0,0,0.08);
         color:#2b2b2b !important;
     }
 
-    /* ONLY style form submit buttons */
+    /* FORM BUTTONS (Submit + Add Variety) */
     div[data-testid="stFormSubmitButton"] button{
         background-color:#8B6F2F !important;
         color:white !important;
@@ -111,6 +111,20 @@ box-shadow:0px 5px 25px rgba(0,0,0,0.08);
     }
 
     div[data-testid="stFormSubmitButton"] button p{
+        color:white !important;
+    }
+
+    /* NEW ORDER BUTTON */
+    div.stButton > button{
+        background-color:#8B6F2F !important;
+        color:white !important;
+        border:none !important;
+        border-radius:8px !important;
+        width:100%;
+        margin-top:8px;
+    }
+
+    div.stButton > button p{
         color:white !important;
     }
 
@@ -415,6 +429,7 @@ st.markdown("""
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
