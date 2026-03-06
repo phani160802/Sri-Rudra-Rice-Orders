@@ -186,10 +186,14 @@ if "rice_items" not in st.session_state:
 # -----------------------------
 # Logo
 # -----------------------------
-col1,col2,col3 = st.columns([1.9,2,1])
-
-with col2:
-    st.image("logo.PNG",width=200)
+st.markdown(
+"""
+<div style="text-align:center;">
+    <img src="logo.PNG" width="200">
+</div>
+""",
+unsafe_allow_html=True
+)
 
 st.markdown("<h1>Sri Rudra Rice 🌾</h1>",unsafe_allow_html=True)
 st.markdown("<h3>Rice Order Management Portal</h3>",unsafe_allow_html=True)
@@ -425,6 +429,7 @@ st.markdown("""
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
