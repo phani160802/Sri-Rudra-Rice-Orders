@@ -57,23 +57,19 @@ box-shadow:0px 5px 25px rgba(0,0,0,0.08);
 
 @media (max-width:768px){
 
-    /* Fix text colors */
     body, label, span, p {
         color:#2b2b2b !important;
     }
 
-    /* Fix dropdown text */
     div[data-baseweb="select"] span{
         color:#2b2b2b !important;
     }
 
-    /* Reduce side padding */
     .block-container{
         padding-left:12px !important;
         padding-right:12px !important;
     }
 
-    /* Mobile titles */
     h1{
         font-size:26px !important;
         text-align:center !important;
@@ -84,15 +80,17 @@ box-shadow:0px 5px 25px rgba(0,0,0,0.08);
         text-align:center !important;
     }
 
-    /* Center logo properly */
-    img{
-        display:block;
-        margin-left:auto !important;
-        margin-right:auto !important;
+    /* CENTER LOGO FIX */
+    [data-testid="stImage"]{
+        text-align:center !important;
+    }
+
+    [data-testid="stImage"] img{
+        display:inline-block !important;
+        margin:auto !important;
         max-width:150px !important;
     }
 
-    /* Fix metric text */
     [data-testid="stMetricValue"]{
         color:#000000 !important;
         font-size:20px !important;
@@ -102,7 +100,6 @@ box-shadow:0px 5px 25px rgba(0,0,0,0.08);
         color:#2b2b2b !important;
     }
 
-    /* FORM BUTTONS (Submit + Add Variety) */
     div[data-testid="stFormSubmitButton"] button{
         background-color:#8B6F2F !important;
         color:white !important;
@@ -116,7 +113,6 @@ box-shadow:0px 5px 25px rgba(0,0,0,0.08);
         color:white !important;
     }
 
-    /* NEW ORDER BUTTON */
     div.stButton > button{
         background-color:#8B6F2F !important;
         color:white !important;
@@ -129,8 +125,6 @@ box-shadow:0px 5px 25px rgba(0,0,0,0.08);
     div.stButton > button p{
         color:white !important;
     }
-
-}
 }
 </style>
 """, unsafe_allow_html=True)
@@ -431,6 +425,7 @@ st.markdown("""
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
