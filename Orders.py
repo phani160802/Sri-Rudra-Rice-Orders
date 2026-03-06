@@ -64,8 +64,11 @@ label, div[data-testid="stForm"] label, div[data-testid="stWidgetLabel"]{
     color:#2b2b2b !important;
 }
 
-div[data-baseweb="select"] input{
-    color:#2b2b2b !important;
+/* Make Shop Name input match Agent Name style */
+div[data-baseweb="select"] input {
+    background-color: #000000 !important; /* black background */
+    color: #ffffff !important;           /* white text */
+    font-weight: bold !important;
 }
 
 @media (max-width:768px){
@@ -429,6 +432,7 @@ st.markdown("""
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
