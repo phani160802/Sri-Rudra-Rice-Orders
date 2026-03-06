@@ -191,14 +191,19 @@ st.markdown(
         margin-right: auto !important;
     }
 
-    /* If the above still fails on wide screens, this manual nudge usually wins */
     [data-testid="stImage"] img {
-        display: block !important;
-        margin-left: 120px !important;
-        margin-right: auto !important;
-        /* Manual fallback for wide layout */
-        position: relative;
-        left: 0%; 
+    display:block !important;
+    margin-left:auto !important;
+    margin-right:auto !important;
+    }
+    
+    /* MOBILE FIX */
+    @media (max-width:768px){
+        [data-testid="stImage"] img{
+            max-width:150px !important;
+            margin-left:120px !important;
+            margin-right:0 !important;
+        }
     }
 
     /* Force the headers to center relative to the whole page */
@@ -489,6 +494,7 @@ st.markdown("""
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
