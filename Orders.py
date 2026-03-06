@@ -100,8 +100,9 @@ box-shadow:0px 5px 25px rgba(0,0,0,0.08);
         color:#2b2b2b !important;
     }
 
-    /* Fix ALL buttons including form buttons */
-    button{
+    /* ONLY style form buttons (not + / - inputs) */
+    div[data-testid="stForm"] button[kind="primary"],
+    div[data-testid="stForm"] button[kind="secondary"]{
         background-color:#8B6F2F !important;
         color:white !important;
         border:none !important;
@@ -110,12 +111,12 @@ box-shadow:0px 5px 25px rgba(0,0,0,0.08);
         margin-top:8px;
     }
 
-    button p{
+    div[data-testid="stForm"] button[kind="primary"] p,
+    div[data-testid="stForm"] button[kind="secondary"] p{
         color:white !important;
     }
 
-}
-</style>
+}</style>
 """, unsafe_allow_html=True)
 
 # -----------------------------
@@ -414,6 +415,7 @@ st.markdown("""
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
