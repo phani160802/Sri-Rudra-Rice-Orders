@@ -186,42 +186,54 @@ if "rice_items" not in st.session_state:
 # -----------------------------
 # Logo
 # -----------------------------
-# -----------------------------
-# TOTAL CENTER FIX
+# FIXED Logo & Header Section
 # -----------------------------
 st.markdown(
     """
     <style>
-    /* 1. Target the image container directly */
+    /* 1. Force the Streamlit Image container to behave as a full-width flexbox */
     [data-testid="stImage"] {
         display: flex !important;
         justify-content: center !important;
+        align-items: center !important;
+        width: 100% !important;
     }
 
-    /* 2. Target the parent div to ensure it takes full width */
-    [data-testid="stImage"] > div {
-        width: fit-content !important;
-        margin-left: auto !important;
-        margin-right: auto !important;
+    /* 2. Remove default padding/margin that Streamlit adds to images */
+    [data-testid="stImage"] > img {
+        margin: 0 auto !important;
+        display: block !important;
     }
 
-    /* 3. Ensure the title and subtitle are truly centered */
-    .centered-text {
+    /* 3. Center the text headers and ensure they occupy 100% width */
+    .header-container {
         text-align: center;
         width: 100%;
+        margin-bottom: 20px;
+    }
+    
+    h1, h3 {
+        margin: 0 !important;
+        padding: 5px 0 !important;
     }
     </style>
     """,
     unsafe_allow_html=True
 )
 
-# Display the logo
+# Render the image
 st.image("logo.PNG", width=200)
 
-# Use a div wrapper for the text to ensure CSS grabs it
-# st.markdown("<h1>Sri Rudra Rice 🌾</h1>", unsafe_allow_html=True)
-st.markdown('<div class="centered-text"><h1>Sri Rudra Rice 🌾</h1><h3>Rice Order Management Portal</h3></div>', unsafe_allow_html=True)
-
+# Render the text headers in a centered div
+st.markdown(
+    """
+    <div class="header-container">
+        <h1>Sri Rudra Rice 🌾</h1>
+        <h3>Rice Order Management Portal</h3>
+    </div>
+    """, 
+    unsafe_allow_html=True
+)
 st.markdown("---")
 
 # -----------------------------
@@ -453,6 +465,7 @@ st.markdown("""
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
