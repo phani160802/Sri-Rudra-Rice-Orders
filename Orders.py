@@ -229,46 +229,42 @@ with col2:
 # CENTERED & NUDGED HEADER
 # -----------------------------
 st.markdown(
-    """
-    <style>
-    .brand-container {
-        text-align: center;
-        width: 100%;
-        /* ADJUST THIS VALUE: Increase 2% to move it further right */
-        margin-left: 5%; 
-        margin-top: -10px;
-    }
-    
-    .brand-title {
-        color: #8B6F2F;
-        font-size: 42px !important;
-        font-weight: bold;
-        margin-bottom: 0px;
-    }
-    
-    .brand-subtitle {
-        color: #6B5B2A;
-        font-size: 20px !important;
-        margin-top: 0px;
-        margin-bottom: 20px;
-    }
+"""
+<style>
 
-    /* Keep it centered on mobile */
-    @media (max-width: 768px) {
-        .brand-container {
-            margin-left: 0% !important;
-        }
+.brand-title{
+    color:#8B6F2F;
+    font-size:42px !important;
+    font-weight:bold;
+    text-align:center;
+    margin-left:6%;   /* moves only Sri Rudra Rice */
+    margin-bottom:0px;
+}
+
+.brand-subtitle{
+    color:#6B5B2A;
+    font-size:20px !important;
+    text-align:center;  /* stays centered */
+    margin-top:0px;
+    margin-bottom:20px;
+}
+
+/* Mobile fix */
+@media (max-width:768px){
+    .brand-title{
+        margin-left:0% !important;
     }
-    </style>
-    
-    <div class="brand-container">
-        <div class="brand-title">Sri Rudra Rice 🌾</div>
-        <div class="brand-subtitle">Rice Order Management Portal</div>
-    </div>
-    """, 
-    unsafe_allow_html=True
+}
+
+</style>
+
+<div>
+    <div class="brand-title">Sri Rudra Rice 🌾</div>
+    <div class="brand-subtitle">Rice Order Management Portal</div>
+</div>
+""",
+unsafe_allow_html=True
 )
-
 # -----------------------------
 # Shop Details (Outside form for autofill)
 # -----------------------------
@@ -498,6 +494,7 @@ st.markdown("""
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
