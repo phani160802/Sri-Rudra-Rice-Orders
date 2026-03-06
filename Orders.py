@@ -60,6 +60,7 @@ div[data-testid="stForm"]{
    ALL WIDGET LABELS & PLACEHOLDER TEXT BLACK
    --------------------------- */
 label, div[data-testid="stForm"] label, div[data-testid="stWidgetLabel"]{
+    font-weight: bold !important;
     color:#2b2b2b !important;
 }
 
@@ -70,6 +71,7 @@ div[data-baseweb="select"] input{
 @media (max-width:768px){
 
     body, label, span, p {
+        font-weight: bold !important;
         color:#2b2b2b !important;
     }
 
@@ -417,6 +419,7 @@ st.markdown("""
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
