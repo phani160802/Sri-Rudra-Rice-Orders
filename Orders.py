@@ -25,12 +25,6 @@ padding-top:0.5rem;
 padding-bottom:0rem;
 }
 
-/* Perfect logo centering */
-[data-testid="stImage"] img{
-    display:block;
-    margin-left:auto;
-    margin-right:auto;
-}
 h1{
 text-align:center;
 color:#8B6F2F;
@@ -193,22 +187,30 @@ if "rice_items" not in st.session_state:
 # Logo
 # -----------------------------
 st.markdown(
-"""
-<style>
-.logo-center{
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    margin-top:10px;
-}
-</style>
-""",
-unsafe_allow_html=True
+    """
+    <style>
+    /* Target the specific Streamlit Image Container */
+    [data-testid="stImage"] {
+        display: flex !important;
+        justify-content: center !important;
+        width: 100% !important;
+    }
+    
+    /* Ensure the image itself doesn't exceed its bounds */
+    [data-testid="stImage"] img {
+        margin: 0 auto;
+    }
+
+    h1, h3 {
+        text-align: center !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
 )
 
-st.markdown('<div class="logo-center">', unsafe_allow_html=True)
+# Simplified Image Call (No need for the extra <div> wrapper anymore)
 st.image("logo.PNG", width=200)
-st.markdown('</div>', unsafe_allow_html=True)
 
 
 st.markdown("<h1>Sri Rudra Rice 🌾</h1>",unsafe_allow_html=True)
@@ -445,6 +447,7 @@ st.markdown("""
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
