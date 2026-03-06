@@ -220,7 +220,7 @@ st.markdown(
 )
 
 # Use columns to create a "Center Slot" - this is the most reliable way in Wide Mode
-col1, col2, col3 = st.columns([1.3, 1, 1])
+col1, col2, col3 = st.columns([1.25, 1, 1])
 with col2:
     st.image("logo.PNG", width=200)
 
@@ -494,6 +494,7 @@ st.markdown("""
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
