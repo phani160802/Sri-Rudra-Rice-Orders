@@ -186,11 +186,14 @@ if "rice_items" not in st.session_state:
 # -----------------------------
 # Logo
 # -----------------------------
+st.image("logo.PNG", width=200)
 st.markdown(
 """
-<div style="text-align:center;">
-    <img src="logo.PNG" width="200">
-</div>
+<style>
+[data-testid="stImage"]{
+    text-align:center;
+}
+</style>
 """,
 unsafe_allow_html=True
 )
@@ -429,6 +432,7 @@ st.markdown("""
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
