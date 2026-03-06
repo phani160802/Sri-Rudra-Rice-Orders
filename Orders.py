@@ -70,6 +70,17 @@ div[data-baseweb="select"] input{
 
 @media (max-width:768px){
 
+    h3, h2 {
+        font-size: 22px !important;  /* adjust size as needed */
+        font-weight: bold !important;
+    }
+
+    /* You can also target specific markdown text if needed */
+    div[data-testid="stMarkdownContainer"] h3 {
+        font-size: 22px !important;
+        font-weight: bold !important;
+    }
+
     body, label, span, p {
         color:#2b2b2b !important;
     }
@@ -418,6 +429,7 @@ st.markdown("""
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
