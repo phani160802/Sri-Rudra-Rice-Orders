@@ -219,7 +219,7 @@ summary_sheet = spreadsheet.worksheet("Orders_Summary")
 # -----------------------------
 # Load shops
 # -----------------------------
-@st.cache_data
+@st.cache_data(ttl=100)
 def load_shops():
     records = items_sheet.get_all_records()
     shop_phone = {}
@@ -430,6 +430,7 @@ st.markdown("""
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
