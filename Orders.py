@@ -530,20 +530,32 @@ else:
     completed_orders = orders_df[orders_df["STATUS"] == "Delivered"].shape[0]
 
     col1, col2 = st.columns(2)
-
+    
     with col1:
         st.markdown(
-            "<span style='font-size:18px; font-weight:bold; margin:0; padding:0;'>Total Pending Orders</span>",
+            f"""
+            <div style='text-align:center; font-size:20px; font-weight:bold; margin:0; padding:0;'>
+                Total Pending Orders
+            </div>
+            <div style='text-align:center; font-size:26px; font-weight:normal; margin:0; padding:0;'>
+                {pending_orders}
+            </div>
+            """,
             unsafe_allow_html=True
         )
-        st.metric("", pending_orders)
     
     with col2:
         st.markdown(
-            "<span style='font-size:18px; font-weight:bold; margin:0; padding:0;'>Total Completed Orders</span>",
+            f"""
+            <div style='text-align:center; font-size:20px; font-weight:bold; margin:0; padding:0;'>
+                Total Completed Orders
+            </div>
+            <div style='text-align:center; font-size:26px; font-weight:normal; margin:0; padding:0;'>
+                {completed_orders}
+            </div>
+            """,
             unsafe_allow_html=True
         )
-        st.metric("", completed_orders)
 
     st.markdown("---")
 
@@ -623,6 +635,7 @@ st.markdown("""
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
