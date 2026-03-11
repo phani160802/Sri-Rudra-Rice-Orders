@@ -164,6 +164,13 @@ div[data-baseweb="select"] input[type="text"] {
         color:#000 !important;
     }
 
+    div[role="listbox"] div[role="option"] {
+        color: #2b2b2b !important;       /* Make option text black */
+        font-size: 16px !important;
+        font-weight: normal !important;
+        background-color: white !important; /* optional: white background */
+    }
+
 
     .stDataFrameContainer div[data-baseweb="select"] div[class*="singleValue"] {
         color: #2b2b2b !important;  /* Text inside dropdowns */
@@ -649,6 +656,7 @@ st.markdown("""
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
