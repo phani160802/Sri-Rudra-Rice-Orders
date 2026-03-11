@@ -3,6 +3,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 from datetime import datetime
 import urllib.parse
+import pandas as pd
 
 st.set_page_config(page_title="Sri Rudra Rice Order Form", layout="wide")
 
@@ -584,6 +585,7 @@ st.markdown("""
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
