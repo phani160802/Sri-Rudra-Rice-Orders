@@ -141,7 +141,10 @@ div[data-baseweb="select"] input[type="text"] {
     div.stButton > button p{
         color:white !important;
     }
-    * Keep metrics side-by-side */
+    /* ORDER DASHBOARD MOBILE FIX */
+@media (max-width:768px){
+
+    /* Keep metrics side by side */
     div[data-testid="stHorizontalBlock"]{
         display:flex !important;
         flex-direction:row !important;
@@ -151,19 +154,20 @@ div[data-baseweb="select"] input[type="text"] {
         flex:1 !important;
     }
 
-    /* Metric VALUE (number) normal */
-    [data-testid="stMetricValue"]{
-        font-size:28px !important;
-        font-weight:normal !important;
-        color:#000000 !important;
-    }
-
-    /* Metric LABEL (text) bold */
-    [data-testid="stMetricLabel"]{
+    /* Increase label size and make bold */
+    div[data-testid="stMetric"] label{
         font-size:18px !important;
-        font-weight:bold !important;
+        font-weight:700 !important;
         color:#2b2b2b !important;
     }
+
+    /* Keep metric value normal */
+    div[data-testid="stMetricValue"]{
+        font-size:24px !important;
+        font-weight:normal !important;
+        color:#000 !important;
+    }
+}
 
 }
 
@@ -609,6 +613,7 @@ st.markdown("""
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
