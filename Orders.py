@@ -154,10 +154,9 @@ div[data-baseweb="select"] input[type="text"] {
         flex:1 !important;
     }
 
-    /* Increase label size and make bold */
-    div[data-testid="stMetric"] label{
-        font-size:18px !important;
-        font-weight:700 !important;
+    [data-testid="stMetricLabel"]{
+        font-size:20px !important;
+        font-weight:bold !important;
         color:#2b2b2b !important;
     }
 
@@ -613,6 +612,7 @@ st.markdown("""
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
