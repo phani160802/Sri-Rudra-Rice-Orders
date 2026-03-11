@@ -533,14 +533,14 @@ else:
 
     with col1:
         st.markdown(
-            "<p style='font-size:20px; font-weight:bold;'>Total Pending Orders</p>",
+            "<span style='font-size:18px; font-weight:bold; margin:0; padding:0;'>Total Pending Orders</span>",
             unsafe_allow_html=True
         )
         st.metric("", pending_orders)
     
     with col2:
         st.markdown(
-            "<p style='font-size:20px; font-weight:bold;'>Total Completed Orders</p>",
+            "<span style='font-size:18px; font-weight:bold; margin:0; padding:0;'>Total Completed Orders</span>",
             unsafe_allow_html=True
         )
         st.metric("", completed_orders)
@@ -623,6 +623,7 @@ st.markdown("""
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
