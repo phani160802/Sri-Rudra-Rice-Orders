@@ -511,6 +511,7 @@ if page == "📦 Order Booking":
                 del st.session_state[k]
         st.rerun()
 
+
 # =====================================================
 # ORDER STATUS DASHBOARD
 # =====================================================
@@ -564,7 +565,7 @@ else:
         pending_total = 0
         varieties_list = []
 
-        for _, row in group.iterrows():
+        for _,row in group.iterrows():
 
             total_qty = clean_number(row["Quantity (Quintal)"])
             delivered = clean_number(row.get("Delivered Qty",0))
@@ -581,9 +582,9 @@ else:
                     f"{row['Variety']} – {pending:g}Q"
                 )
 
+        # Check if fully delivered
         status_values = group["STATUS"].astype(str).str.strip()
 
-        # Skip fully delivered orders
         if all(s == "Delivered" for s in status_values):
             continue
 
@@ -637,11 +638,10 @@ else:
     # -----------------------------
     selected_order = None
 
-    for _, row in edited_df.iterrows():
+    for _,row in edited_df.iterrows():
 
         if str(row["STATUS"]).strip() == "Partial Delivery":
             selected_order = row["Order ID"]
-            break
 
     # =====================================================
     # PARTIAL DELIVERY FORM
@@ -654,7 +654,7 @@ else:
         st.markdown("---")
         st.markdown(f"### 🚚 Partial Delivery – Order {selected_order}")
 
-        order_rows = df[df["Order ID"] == int(selected_order)]
+        order_rows = df[df["Order ID"]==int(selected_order)]
 
         delivery_date = st.date_input("Delivery Date")
 
@@ -691,32 +691,36 @@ else:
             })
 
     # =====================================================
-    # UPDATE BUTTON (OPTIMIZED VERSION)
+    # UPDATE BUTTON
     # =====================================================
 
     update_clicked = st.button("💾 Update Order")
 
     if update_clicked:
 
+        # Load sheet
         sheet_data = items_sheet.get_all_values()
         headers = sheet_data[0]
         rows = sheet_data[1:]
 
         df_sheet = pd.DataFrame(rows, columns=headers)
 
-        # NORMAL STATUS UPDATE
+        # -----------------------------
+        # Update STATUS
+        # -----------------------------
         for _,row in edited_df.iterrows():
 
             order_id = row["Order ID"]
             new_status = row["STATUS"]
 
-            if new_status != "Partial Delivery":
+            df_sheet.loc[
+                df_sheet["Order ID"] == str(order_id),
+                "STATUS"
+            ] = new_status
 
-                mask = df_sheet["Order ID"] == str(order_id)
-
-                df_sheet.loc[mask,"STATUS"] = new_status
-
-        # PARTIAL DELIVERY UPDATE
+        # -----------------------------
+        # Partial Delivery Update
+        # -----------------------------
         if selected_order:
 
             for update in delivery_updates:
@@ -749,10 +753,14 @@ else:
                 df_sheet.loc[mask,"Delivery Date"] = str(delivery_date)
                 df_sheet.loc[mask,"STATUS"] = status
 
-        # CLEAN DATA
+        # -----------------------------
+        # CLEAN DATA (Fix JSON Error)
+        # -----------------------------
+        # Clean dataframe
         df_sheet = df_sheet.replace([float("inf"), -float("inf")], "")
         df_sheet = df_sheet.fillna("")
 
+        # IMPORTANT: Ensure column order matches Google Sheet
         df_sheet = df_sheet[headers]
 
         updated_values = [headers] + df_sheet.values.tolist()
@@ -764,7 +772,6 @@ else:
         st.rerun()
 
 
-
 # -----------------------------
 # Footer
 # -----------------------------
@@ -773,7 +780,6 @@ st.markdown("""
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
-
 
 
 
