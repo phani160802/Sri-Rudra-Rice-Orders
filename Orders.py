@@ -4,50 +4,33 @@ from google.oauth2.service_account import Credentials
 from datetime import datetime
 import urllib.parse
 import pandas as pd
+import uuid
 
-
-## Helper Functions
-
-def clean_number(value):
-    if value is None or value == "":
-        return 0.0
-    value = str(value)
-    value = value.replace("₹","").replace(",","").strip()
-    return float(value)
-
+# =====================================================
+# PAGE CONFIG
+# =====================================================
 st.set_page_config(page_title="Sri Rudra Rice Order Form", layout="wide")
 
-# -----------------------------
-# Custom UI Styling
-# -----------------------------
+# =====================================================
+# STYLING
+# =====================================================
 st.markdown("""
 <style>
-
 header {visibility: hidden;}
 [data-testid="stToolbar"] {display:none;}
 
 .stApp {
     background: linear-gradient(135deg,#f9f6e7,#DDC57A);
 }
-
-.block-container{
+.block-container {
     max-width:1000px;
     padding-top:0.5rem;
     padding-bottom:0rem;
 }
+h1 { text-align:center; color:#8B6F2F; }
+h3 { text-align:center; color:#6B5B2A; }
 
-h1{
-    text-align:center;
-    color:#8B6F2F;
-}
-
-h3{
-    text-align:center;
-    color:#6B5B2A;
-}
-
-/* Footer styling */
-.footer{
+.footer {
     width:100vw;
     margin-left:-50vw;
     left:50%;
@@ -59,74 +42,55 @@ h3{
     font-size:14px;
     color:#4A3F1C;
 }
-
-div[data-testid="stForm"]{
+div[data-testid="stForm"] {
     background:white;
     padding:20px;
     border-radius:15px;
     box-shadow:0px 5px 25px rgba(0,0,0,0.08);
 }
-
-/* ---------------------------
-   ALL WIDGET LABELS & PLACEHOLDER TEXT BLACK
-   --------------------------- */
-label, div[data-testid="stForm"] label, div[data-testid="stWidgetLabel"]{
+label, div[data-testid="stForm"] label, div[data-testid="stWidgetLabel"] {
     font-weight: bold !important;
     color:#2b2b2b !important;
 }
-
-/* Make Shop Name input match Agent Name style */
-
-div[data-baseweb="select"] input[type="text"] {
-    color: #000000 !important;  /* black text for visibility */
+.brand-title {
+    color:#8B6F2F;
+    font-size:42px !important;
+    font-weight:bold;
+    text-align:center;
+    margin-bottom:0px;
 }
-@media (max-width:768px){
+.brand-subtitle {
+    color:#6B5B2A;
+    font-size:20px !important;
+    text-align:center;
+    margin-top:0px;
+    margin-bottom:20px;
+}
+.item-card {
+    background:#fffdf3;
+    border:1px solid #e0c96e;
+    border-radius:10px;
+    padding:12px 16px;
+    margin-bottom:12px;
+}
+.status-badge {
+    display:inline-block;
+    padding:3px 10px;
+    border-radius:12px;
+    font-size:13px;
+    font-weight:600;
+}
 
-    h3, h2 {
-        font-size: 22px !important;  /* adjust size as needed */
-        font-weight: bold !important;
-    }
-
-    /* You can also target specific markdown text if needed */
-    div[data-testid="stMarkdownContainer"] h3 {
-        font-size: 22px !important;
-        font-weight: bold !important;
-    }
-
-    body, label, span, p {
-        color:#2b2b2b !important;
-    }
-
-    .block-container{
-        padding-left:12px !important;
-        padding-right:12px !important;
-    }
-
-    h1{
-        font-size:26px !important;
-        text-align:center !important;
-    }
-
-    h3{
-        font-size:18px !important;
-        text-align:center !important;
-    }
-
-    img{
-        max-width:150px !important;
-        margin-left:120px !important;
-    }
-
-    [data-testid="stMetricValue"]{
-        color:#000000 !important;
-        font-size:20px !important;
-    }
-    
-    [data-testid="stMetricLabel"]{
-        color:#2b2b2b !important;
-    }
-
-    div[data-testid="stFormSubmitButton"] button{
+/* Mobile */
+@media (max-width:768px) {
+    .brand-title { font-size:26px !important; margin-left:0 !important; }
+    .brand-subtitle { font-size:18px !important; }
+    h3, h2 { font-size:22px !important; font-weight:bold !important; }
+    .block-container { padding-left:12px !important; padding-right:12px !important; }
+    [data-testid="stMetricValue"] { color:#000 !important; font-size:20px !important; }
+    [data-testid="stMetricLabel"] { color:#2b2b2b !important; font-size:20px !important; font-weight:bold !important; }
+    div[data-testid="stFormSubmitButton"] button,
+    div.stButton > button {
         background-color:#8B6F2F !important;
         color:white !important;
         border:none !important;
@@ -134,79 +98,6 @@ div[data-baseweb="select"] input[type="text"] {
         width:100%;
         margin-top:8px;
     }
-
-    div[data-testid="stFormSubmitButton"] button p{
-        color:white !important;
-    }
-
-    div.stButton > button{
-        background-color:#8B6F2F !important;
-        color:white !important;
-        border:none !important;
-        border-radius:8px !important;
-        width:100%;
-        margin-top:8px;
-    }
-
-    div.stButton > button p{
-        color:white !important;
-    }
-
-    div[data-testid="stHorizontalBlock"]{
-        display:flex !important;
-        flex-direction:row !important;
-    }
-
-    div[data-testid="stHorizontalBlock"] > div{
-        flex:1 !important;
-    }
-
-    [data-testid="stMetricLabel"]{
-        font-size:20px !important;
-        font-weight:bold !important;
-        color:#2b2b2b !important;
-    }
-
-    /* Keep metric value normal */
-    div[data-testid="stMetricValue"]{
-        font-size:24px !important;
-        font-weight:normal !important;
-        color:#000 !important;
-    }
-
-    div[role="listbox"] div[role="option"] {
-        color: #2b2b2b !important;       /* Make option text black */
-        font-size: 16px !important;
-        font-weight: normal !important;
-        background-color: white !important; /* optional: white background */
-    }
-
-
-    .stDataFrameContainer div[data-baseweb="select"] div[class*="singleValue"] {
-        color: #2b2b2b !important;  /* Text inside dropdowns */
-        font-weight: normal !important;
-        font-size: 16px !important;  /* Adjust size as needed */
-    }
-
-    .stDataFrameContainer div[data-baseweb="select"] div[class*="option"] {
-        color: #2b2b2b !important;  /* Options in dropdown */
-        font-weight: normal !important;
-        font-size: 16px !important;  /* Adjust size as needed */
-    }
-
-    .stDataFrameContainer div[data-baseweb="select"] div[class*="menu"] {
-    color: #2b2b2b !important;       /* text color for all options */
-    font-size: 16px !important;
-    font-weight: normal !important;
-    }
-}
-
-/* Logo centering */
-[data-testid="stImage"] {
-    text-align: center !important;
-    display: block !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
 }
 
 [data-testid="stImage"] img {
@@ -214,176 +105,180 @@ div[data-baseweb="select"] input[type="text"] {
     margin-left:auto !important;
     margin-right:auto !important;
 }
-
-/* Force the headers to center relative to the whole page */
-.main-header {
-    text-align: center;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-/* Header text styling */
-.brand-title{
-    color:#8B6F2F;
-    font-size:42px !important;
-    font-weight:bold;
-    text-align:center;
-    margin-left:6%;
-    margin-bottom:0px;
-}
-
-.brand-subtitle{
-    color:#6B5B2A;
-    font-size:20px !important;
-    text-align:center;
-    margin-top:0px;
-    margin-bottom:20px;
-}
-
-/* Mobile fix */
-@media (max-width:768px){
-    .brand-title{
-        margin-left:0% !important;
-    }
-}
 </style>
 """, unsafe_allow_html=True)
 
-# -----------------------------
-# Rice varieties
-# -----------------------------
-rice_varieties = ["HMT","BPT","JSR","Broken","RNR","KNM","Other"]
-
-# -----------------------------
-# Google Sheets Connection
-# -----------------------------
-scope = [
-    "https://www.googleapis.com/auth/spreadsheets",
-    "https://www.googleapis.com/auth/drive"
+# =====================================================
+# CONSTANTS
+# =====================================================
+RICE_VARIETIES = ["HMT", "BPT", "JSR", "Broken", "RNR", "KNM", "Other"]
+STATUS_OPTIONS = ["Order Accepted", "Packed", "Out for Delivery", "Partial Delivery", "Delivered"]
+SHEET_KEY = "1dA4A8nbdwS_wcKVb3dA5ofqDlACw07SL3i0mtPYSo0Q"
+ITEMS_SHEET = "Order_Items"
+SUMMARY_SHEET = "Orders_Summary"
+ITEMS_HEADERS = [
+    "Date", "Order ID", "Shop Name", "Phone", "Agent Name",
+    "Variety", "Quantity (Quintal)", "Price (₹/Quintal)", "Item Total",
+    "Delivered Qty", "Pending Qty", "Delivery Date", "STATUS"
 ]
 
-creds = Credentials.from_service_account_info(
-    st.secrets["gcp_service_account"], scopes=scope
-)
+# =====================================================
+# HELPER FUNCTIONS
+# =====================================================
 
-client = gspread.authorize(creds)
-
-spreadsheet = client.open_by_key("1dA4A8nbdwS_wcKVb3dA5ofqDlACw07SL3i0mtPYSo0Q")
-
-items_sheet = spreadsheet.worksheet("Order_Items")
-summary_sheet = spreadsheet.worksheet("Orders_Summary")
-
+def clean_number(value) -> float:
+    """Safely parse a number from a cell value."""
+    if value is None or value == "":
+        return 0.0
+    return float(str(value).replace("₹", "").replace(",", "").strip())
 
 
-# -----------------------------
-# Load shops
-# -----------------------------
-@st.cache_data(ttl=100)
+def generate_order_id(sheet) -> str:
+    """
+    Generate a collision-safe order ID by reading the latest value
+    from the sheet at submission time, not cached.
+    Falls back to a UUID fragment if the sheet is unreadable.
+    """
+    try:
+        values = sheet.col_values(2)[1:]  # col B = Order ID
+        existing = [int(v) for v in values if v.strip().isdigit()]
+        return str(max(existing) + 1) if existing else "1"
+    except Exception:
+        return str(uuid.uuid4().int)[:8]
+
+
+def build_whatsapp_link(contact: str, shop: str, items: list, grand_total: float) -> str:
+    """Build a WhatsApp pre-filled message link."""
+    phone = "".join(filter(str.isdigit, contact))
+    if len(phone) == 10:
+        phone = "91" + phone
+    lines = [f"Hi {shop} 👋", "Order Confirmed ✅", "Order Details:"]
+    for item in items:
+        total = item["quantity"] * item["price"]
+        lines.append(f"{item['variety']} : {item['quantity']} QTL x ₹{item['price']} = ₹{total:,.0f}")
+    lines.append(f"Grand Total : ₹{grand_total:,.0f}")
+    lines.append("Thank you, Sri Rudra Rice 🌾")
+    return f"https://wa.me/{phone}?text={urllib.parse.quote(chr(10).join(lines))}"
+
+
+def determine_order_status(status_values: list) -> str:
+    """Derive the display status for an order from its line-item statuses."""
+    statuses = [str(s).strip() for s in status_values]
+    if all(s == "Delivered" for s in statuses):
+        return "Delivered"
+    elif any(s == "Partial Delivery" for s in statuses):
+        return "Partial Delivery"
+    elif any(s == "Out for Delivery" for s in statuses):
+        return "Out for Delivery"
+    elif any(s == "Packed" for s in statuses):
+        return "Packed"
+    return "Order Accepted"
+
+
+def write_order_to_sheet(items_sheet, summary_sheet, order_id: str, shop: str,
+                          contact: str, agent: str, valid_items: list, grand_total: float):
+    """Append all line items + summary row for a new order."""
+    today = datetime.now().strftime("%Y-%m-%d")
+    rows = [
+        [
+            today, order_id, shop, contact, agent,
+            item["variety"], item["quantity"], item["price"], item["total"],
+            0, item["quantity"], "", "Order Accepted"
+        ]
+        for item in valid_items
+    ]
+    items_sheet.append_rows(rows, value_input_option="USER_ENTERED")
+    summary_sheet.append_row(
+        [today, order_id, shop, agent, sum(i["quantity"] for i in valid_items), grand_total],
+        value_input_option="USER_ENTERED"
+    )
+
+
+def push_sheet_update(items_sheet, df_sheet: pd.DataFrame, headers: list):
+    """Write the full updated dataframe back to the sheet."""
+    df_sheet = df_sheet.replace([float("inf"), -float("inf")], "").fillna("")
+    df_sheet = df_sheet[headers]
+    items_sheet.update([headers] + df_sheet.values.tolist())
+
+
+# =====================================================
+# GOOGLE SHEETS CONNECTION
+# =====================================================
+@st.cache_resource
+def get_sheets():
+    scope = [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive"
+    ]
+    creds = Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=scope)
+    client = gspread.authorize(creds)
+    spreadsheet = client.open_by_key(SHEET_KEY)
+    return (
+        spreadsheet.worksheet(ITEMS_SHEET),
+        spreadsheet.worksheet(SUMMARY_SHEET)
+    )
+
+items_sheet, summary_sheet = get_sheets()
+
+
+@st.cache_data(ttl=60)
 def load_shops():
+    """Load shop → phone/agent lookup from the sheet."""
     records = items_sheet.get_all_records()
-    shop_phone = {}
-    shop_agent = {}
+    shop_phone, shop_agent = {}, {}
     for r in records:
-        shop = str(r.get("Shop Name","")).strip()
-        if shop != "":
-            shop_phone[shop] = str(r.get("Phone",""))
-            shop_agent[shop] = str(r.get("Agent Name",""))
+        shop = str(r.get("Shop Name", "")).strip()
+        if shop:
+            shop_phone[shop] = str(r.get("Phone", ""))
+            shop_agent[shop] = str(r.get("Agent Name", ""))
     return shop_phone, shop_agent
+
 
 shop_phone, shop_agent = load_shops()
 existing_shops = sorted(shop_phone.keys())
 
-# -----------------------------
-# Session state
-# -----------------------------
+# =====================================================
+# SESSION STATE DEFAULTS
+# =====================================================
 if "rice_items" not in st.session_state:
     st.session_state.rice_items = 2
+if "last_order_id" not in st.session_state:
+    st.session_state.last_order_id = None
+if "last_wa_link" not in st.session_state:
+    st.session_state.last_wa_link = None
 
-# -----------------------------
-# Logo
-# -----------------------------
-
-# Logo Alignment
-st.markdown(
-    """
-    <style>
-    /* Target the specific container for the image */
-    [data-testid="stImage"] {
-        text-align: center !important;
-        display: block !important;
-        margin-left: auto !important;
-        margin-right: auto !important;
-    }
-
-    [data-testid="stImage"] img {
-    display:block !important;
-    margin-left:auto !important;
-    margin-right:auto !important;
-    }
-    
-    /* MOBILE FIX */
-    @media (max-width:768px){
-        [data-testid="stImage"] img{
-            max-width:150px !important;
-            margin-left:110px !important;
-            margin-right:0 !important;
-        }
-    }
-
-    /* Force the headers to center relative to the whole page */
-    .main-header {
-        text-align: center;
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-# Use columns to create a "Center Slot" - this is the most reliable way in Wide Mode
+# =====================================================
+# HEADER
+# =====================================================
 col1, col2, col3 = st.columns([1.2, 1, 1])
 with col2:
     st.image("logo.PNG", width=200)
 
-
-
-# Header Text
 st.markdown("""
 <div>
     <div class="brand-title">Sri Rudra Rice 🌾</div>
     <div class="brand-subtitle">Rice Order Management Portal</div>
 </div>
 """, unsafe_allow_html=True)
-
-
 st.markdown("----")
 
-
-
-# -----------------------------
-# Navigation
-# -----------------------------
-page = st.radio(
-"Select Page",
-["📦 Order Booking","📊 Order Status"],
-horizontal=True,
-index=0
-)
 # =====================================================
-# ORDER BOOKING PAGE
+# NAVIGATION
+# =====================================================
+page = st.radio(
+    "Select Page",
+    ["📦 Order Booking", "📊 Order Status", "🔍 Order History"],
+    horizontal=True,
+    index=0
+)
+
+# =====================================================
+# PAGE: ORDER BOOKING
 # =====================================================
 if page == "📦 Order Booking":
 
-    # -----------------------------
-    # Shop Details
-    # -----------------------------
     st.markdown("### 🏪 Shop Details")
-    
+
     col1, col2, col3 = st.columns(3)
     with col1:
         shop_name = st.selectbox(
@@ -394,128 +289,125 @@ if page == "📦 Order Booking":
             accept_new_options=True,
             key="shop_name"
         )
-    
+
+    # Auto-fill known shop details
     if shop_name in shop_phone:
-        st.session_state.contact_number = shop_phone.get(shop_name,"")
-        st.session_state.agent_name = shop_agent.get(shop_name,"")
-    
+        st.session_state.contact_number = shop_phone.get(shop_name, "")
+        st.session_state.agent_name = shop_agent.get(shop_name, "")
+
     with col2:
         contact_number = st.text_input("Contact Number", key="contact_number")
     with col3:
         agent_name = st.text_input("Agent Name", key="agent_name")
-    
+
     st.markdown("---")
-    
-    # -----------------------------
-    # Order Form
-    # -----------------------------
+
+    # ── Order Form ──────────────────────────────────
     with st.form("order_form"):
-    
         st.markdown("### 🌾 Rice Varieties")
-        grand_total = 0
+        grand_total = 0.0
         order_details = []
-    
+
         for i in range(st.session_state.rice_items):
-            st.markdown(f"#### Item {i+1}")
-            col1, col2, col3 = st.columns([3,2,2])
-            with col1:
-                variety = st.selectbox("Rice Variety", options=rice_varieties, key=f"variety_{i}")
-                if variety=="Other":
-                    variety = st.text_input("Enter Rice Variety", key=f"custom_variety_{i}")
-            with col2:
-                quantity = st.number_input("Quantity (Quintals)", min_value=0.0, step=0.5, key=f"qty_{i}")
-            with col3:
-                price = st.number_input("Price per Quintal (₹)", min_value=0.0, step=100.0, key=f"price_{i}")
-            item_total = quantity * price
-            grand_total += item_total
-            order_details.append({"variety":variety,"quantity":quantity,"price":price,"total":item_total})
-            st.write(f"Item Total: ₹ {item_total:,.2f}")
-            st.markdown("---")
-    
+            with st.container():
+                st.markdown(f'<div class="item-card">', unsafe_allow_html=True)
+                st.markdown(f"**Item {i + 1}**")
+                col1, col2, col3 = st.columns([3, 2, 2])
+                with col1:
+                    variety = st.selectbox("Rice Variety", options=RICE_VARIETIES, key=f"variety_{i}")
+                    if variety == "Other":
+                        variety = st.text_input("Enter Rice Variety", key=f"custom_variety_{i}")
+                with col2:
+                    quantity = st.number_input("Quantity (Quintals)", min_value=0.0, step=0.5, key=f"qty_{i}")
+                with col3:
+                    price = st.number_input("Price per Quintal (₹)", min_value=0.0, step=100.0, key=f"price_{i}")
+                item_total = quantity * price
+                grand_total += item_total
+                order_details.append({"variety": variety, "quantity": quantity, "price": price, "total": item_total})
+                if quantity > 0:
+                    st.caption(f"Item Total: ₹ {item_total:,.2f}")
+                st.markdown("</div>", unsafe_allow_html=True)
+
         st.markdown("## 💰 Order Summary")
         col1, col2 = st.columns(2)
         with col1:
-            valid_items_count = len([i for i in order_details if i["quantity"]>0])
-            st.metric("Total Items", valid_items_count)
+            valid_count = len([i for i in order_details if i["quantity"] > 0])
+            st.metric("Total Items", valid_count)
         with col2:
             st.metric("Grand Total ₹", f"{grand_total:,.2f}")
         st.markdown("---")
-    
-        add_more = st.form_submit_button("➕ Add Another Rice Variety")
-        col1, col2, col3 = st.columns([1.9,2,1])
-        with col2:
-            submit_button = st.form_submit_button("Submit Order")
-    
-    # -----------------------------
-    # Add more rice slots
-    # -----------------------------
+
+        col_a, col_b, col_c = st.columns([1, 1, 1])
+        with col_a:
+            add_more = st.form_submit_button("➕ Add Item")
+        with col_b:
+            remove_one = st.form_submit_button("➖ Remove Last Item")
+        with col_c:
+            submit_button = st.form_submit_button("✅ Submit Order", type="primary")
+
+    # ── Form action handlers ─────────────────────────
     if add_more:
         st.session_state.rice_items += 1
         st.rerun()
-    
-    # -----------------------------
-    # Submit order
-    # -----------------------------
+
+    if remove_one and st.session_state.rice_items > 1:
+        last = st.session_state.rice_items - 1
+        for key in [f"qty_{last}", f"price_{last}", f"variety_{last}", f"custom_variety_{last}"]:
+            st.session_state.pop(key, None)
+        st.session_state.rice_items -= 1
+        st.rerun()
+
     if submit_button:
-        valid_items = [i for i in order_details if i["quantity"]>0]
-        if shop_name=="" or contact_number=="" or not valid_items:
-            st.warning("Please complete all required fields.")
+        valid_items = [i for i in order_details if i["quantity"] > 0]
+
+        # Validation
+        errors = []
+        if not shop_name:
+            errors.append("Shop Name is required.")
+        if not contact_number:
+            errors.append("Contact Number is required.")
+        if not valid_items:
+            errors.append("At least one rice item with quantity > 0 is required.")
+
+        if errors:
+            for e in errors:
+                st.error(e)
             st.stop()
-        today = datetime.now().strftime("%Y-%m-%d")
-        try:
-            last = items_sheet.col_values(2)[1:]
-            order_id = str(int(last[-1])+1) if last else "1"
-        except:
-            order_id="1"
-        for item in valid_items:
-            items_sheet.append_row([
-                    today,
-                    order_id,
-                    shop_name,
-                    contact_number,
-                    agent_name,
-                    item["variety"],
-                    item["quantity"],
-                    item["price"],
-                    item["total"],
-                    0,                       # Delivered Qty
-                    item["quantity"],        # Pending Qty
-                    "",                      # Delivery Date
-                    "Order Accepted"
-                ], value_input_option="USER_ENTERED")
-        total_quantity = sum(i["quantity"] for i in valid_items)
-        summary_sheet.append_row([today, order_id, shop_name, agent_name, total_quantity, grand_total],
-                                 value_input_option="USER_ENTERED")
-        # WhatsApp confirmation
-        phone = "".join(filter(str.isdigit,contact_number))
-        if len(phone)==10:
-            phone="91"+phone
-        lines = [f"Hi {shop_name} 👋","Order Confirmed ✅","Order Details:"]
-        for item in valid_items:
-            total = item["quantity"]*item["price"]
-            lines.append(f"{item['variety']} : {item['quantity']} QTL x ₹{item['price']} = ₹{total:,.0f}")
-        lines.append(f"Grand Total : ₹{grand_total:,.0f}")
-        lines.append("Thank you, Sri Rudra Rice 🌾")
-        msg = urllib.parse.quote("\n".join(lines))
-        wa_link = f"https://wa.me/{phone}?text={msg}"
+
+        # Submit
+        order_id = generate_order_id(items_sheet)
+        write_order_to_sheet(items_sheet, summary_sheet, order_id, shop_name,
+                             contact_number, agent_name, valid_items, grand_total)
+
+        # Invalidate shop cache so new shops appear
+        load_shops.clear()
+
+        st.session_state.last_order_id = order_id
+        st.session_state.last_wa_link = build_whatsapp_link(contact_number, shop_name, valid_items, grand_total)
+
         st.success(f"✅ Order Confirmed | Order ID : {order_id}")
-        st.markdown(f"[📱 Send WhatsApp Confirmation]({wa_link})")
-    
-    # -----------------------------
-    # New Order
-    # -----------------------------
+        st.markdown(f"[📱 Send WhatsApp Confirmation]({st.session_state.last_wa_link})")
+
+    # Show previous success message if rerun happened
+    elif st.session_state.last_order_id:
+        st.success(f"✅ Last Order ID : {st.session_state.last_order_id}")
+        if st.session_state.last_wa_link:
+            st.markdown(f"[📱 Send WhatsApp Confirmation]({st.session_state.last_wa_link})")
+
     if st.button("➕ New Order"):
         st.session_state.rice_items = 2
+        st.session_state.last_order_id = None
+        st.session_state.last_wa_link = None
         for k in list(st.session_state.keys()):
-            if k.startswith(("qty_","price_","variety_","custom_variety_")):
-                del st.session_state[k]
+            if k.startswith(("qty_", "price_", "variety_", "custom_variety_",
+                             "shop_name", "contact_number", "agent_name")):
+                st.session_state.pop(k, None)
         st.rerun()
 
 # =====================================================
-# ORDER STATUS DASHBOARD
+# PAGE: ORDER STATUS
 # =====================================================
-
-else:
+elif page == "📊 Order Status":
 
     st.markdown("### 📊 Orders Dashboard")
 
@@ -523,104 +415,79 @@ else:
     df = pd.DataFrame(records)
 
     if df.empty:
-        st.info("No orders found")
+        st.info("No orders found.")
         st.stop()
 
-    # -----------------------------
-    # Metrics
-    # -----------------------------
+    # ── Metrics ─────────────────────────────────────
     grouped_status = df.groupby("Order ID")["STATUS"].apply(list)
+    completed_orders = sum(1 for s in grouped_status if all(x.strip() == "Delivered" for x in s))
+    pending_orders = len(grouped_status) - completed_orders
 
-    completed_orders = 0
-    pending_orders = 0
-
-    for statuses in grouped_status:
-
-        statuses = [str(s).strip() for s in statuses]
-
-        if all(s == "Delivered" for s in statuses):
-            completed_orders += 1
-        else:
-            pending_orders += 1
-
-    col1, col2 = st.columns(2)
-
+    col1, col2, col3 = st.columns(3)
     col1.metric("Pending Orders", pending_orders)
     col2.metric("Completed Orders", completed_orders)
-
+    col3.metric("Total Orders", len(grouped_status))
     st.markdown("---")
 
-    # -----------------------------
-    # Build Dashboard Table
-    # -----------------------------
-    grouped = df.groupby("Order ID")
+    # ── Search / Filter ──────────────────────────────
+    all_shops_in_orders = sorted(df["Shop Name"].dropna().unique().tolist())
+    col_search1, col_search2 = st.columns([2, 1])
+    with col_search1:
+        selected_shop = st.selectbox(
+            "🏪 Filter by Shop Name",
+            options=["All Shops"] + all_shops_in_orders,
+            index=0,
+            key="status_shop_filter"
+        )
+    with col_search2:
+        search_query = st.text_input("🔍 Search by Order ID", placeholder="e.g. 42")
 
+    # ── Build dashboard table ────────────────────────
+    grouped = df.groupby("Order ID")
     orders = []
 
     for order_id, group in grouped:
-
-        shop = group["Shop Name"].iloc[0]
-
-        pending_total = 0
-        varieties_list = []
-
-        status_values = []
-
-        for _, row in group.iterrows():
-
-            total_qty = clean_number(row["Quantity (Quintal)"])
-            delivered = clean_number(row.get("Delivered Qty", 0))
-
-            pending = total_qty - delivered
-
-            if pending < 0:
-                pending = 0
-
-            pending_total += pending
-
-            if pending > 0:
-                varieties_list.append(
-                    f"{row['Variety']} – {pending:g}Q"
-                )
-
-            status_values.append(str(row["STATUS"]).strip())
-
-        # Skip fully delivered orders
-        if all(s == "Delivered" for s in status_values):
+        statuses = [str(s).strip() for s in group["STATUS"].tolist()]
+        if all(s == "Delivered" for s in statuses):
             continue
 
-        varieties = ", ".join(varieties_list)
+        pending_total = 0.0
+        varieties_list = []
 
-        # -----------------------------
-        # Determine Correct Order Status
-        # -----------------------------
-        if all(s == "Delivered" for s in status_values):
-            status = "Delivered"
-
-        elif any(s == "Partial Delivery" for s in status_values):
-            status = "Partial Delivery"
-
-        elif any(s == "Out for Delivery" for s in status_values):
-            status = "Out for Delivery"
-
-        elif any(s == "Packed" for s in status_values):
-            status = "Packed"
-
-        else:
-            status = "Order Accepted"
+        for _, row in group.iterrows():
+            total_qty = clean_number(row["Quantity (Quintal)"])
+            delivered = clean_number(row.get("Delivered Qty", 0))
+            pending = max(total_qty - delivered, 0)
+            pending_total += pending
+            if pending > 0:
+                varieties_list.append(f"{row['Variety']} – {pending:g}Q")
 
         orders.append({
             "Order ID": str(order_id),
-            "Shop": shop,
+            "Shop": group["Shop Name"].iloc[0],
+            "Agent": group["Agent Name"].iloc[0],
+            "Date": group["Date"].iloc[0],
             "Total Qty": pending_total,
-            "Varieties": varieties,
-            "STATUS": status
+            "Varieties": ", ".join(varieties_list),
+            "STATUS": determine_order_status(statuses)
         })
 
     orders_df = pd.DataFrame(orders)
 
     if orders_df.empty:
         st.success("🎉 All orders delivered!")
+        st.stop()
+
+    # Apply shop dropdown filter
+    if selected_shop != "All Shops":
+        orders_df = orders_df[orders_df["Shop"] == selected_shop]
+
+    # Apply Order ID text filter
+    if search_query:
+        orders_df = orders_df[orders_df["Order ID"].str.contains(search_query.strip())]
+
+    if orders_df.empty:
+        st.warning("No matching orders found.")
         st.stop()
 
     st.markdown("### 📦 Update Order Status")
@@ -631,183 +498,139 @@ else:
         hide_index=True,
         key="orders_editor",
         column_config={
-            "STATUS": st.column_config.SelectboxColumn(
-                "STATUS",
-                options=[
-                    "Order Accepted",
-                    "Packed",
-                    "Out for Delivery",
-                    "Partial Delivery",
-                    "Delivered"
-                ]
-            )
+            "STATUS": st.column_config.SelectboxColumn("STATUS", options=STATUS_OPTIONS)
         },
-        disabled=["Order ID","Shop","Total Qty","Varieties"]
+        disabled=["Order ID", "Shop", "Agent", "Date", "Total Qty", "Varieties"]
     )
 
-    # -----------------------------
-    # Detect Partial Delivery
-    # -----------------------------
+    # ── Partial Delivery Form ────────────────────────
     selected_order = None
-
-    for _,row in edited_df.iterrows():
-
+    for _, row in edited_df.iterrows():
         if str(row["STATUS"]).strip() == "Partial Delivery":
             selected_order = row["Order ID"]
-
-    # =====================================================
-    # PARTIAL DELIVERY FORM
-    # =====================================================
+            break
 
     delivery_updates = []
 
     if selected_order:
-
         st.markdown("---")
         st.markdown(f"### 🚚 Partial Delivery – Order {selected_order}")
-
-        order_rows = df[df["Order ID"]==int(selected_order)]
-
+        order_rows = df[df["Order ID"] == int(selected_order)]
         delivery_date = st.date_input("Delivery Date")
 
-        for i,row in order_rows.iterrows():
-
+        for i, row in order_rows.iterrows():
             variety = row["Variety"]
-
             total_qty = clean_number(row["Quantity (Quintal)"])
-            delivered = clean_number(row.get("Delivered Qty",0))
-
-            pending = total_qty - delivered
-
+            delivered = clean_number(row.get("Delivered Qty", 0))
+            pending = max(total_qty - delivered, 0)
             if pending <= 0:
                 continue
-
-            col1,col2,col3 = st.columns([2,1,1])
-
+            col1, col2, col3 = st.columns([2, 1, 1])
             col1.write(f"**{variety}**")
             col2.write(f"Pending: {pending}Q")
-
             deliver_now = col3.number_input(
-                f"Deliver {variety}",
-                min_value=0.0,
-                max_value=pending,
-                step=1.0,
-                key=f"deliver_{i}"
+                f"Deliver {variety}", min_value=0.0, max_value=pending, step=1.0, key=f"deliver_{i}"
             )
-
             delivery_updates.append({
-                "variety": variety,
-                "deliver_now": deliver_now,
-                "pending": pending,
-                "delivered": delivered
+                "variety": variety, "deliver_now": deliver_now,
+                "pending": pending, "delivered": delivered
             })
 
-    # =====================================================
-    # UPDATE BUTTON
-    # =====================================================
-
-    update_clicked = st.button("💾 Update Order")
-
-    if update_clicked:
-
+    # ── Update Button ────────────────────────────────
+    if st.button("💾 Update Orders", type="primary"):
         sheet_data = items_sheet.get_all_values()
         headers = sheet_data[0]
-        rows = sheet_data[1:]
+        df_sheet = pd.DataFrame(sheet_data[1:], columns=headers)
 
-        df_sheet = pd.DataFrame(rows, columns=headers)
+        # Apply status changes
+        for _, row in edited_df.iterrows():
+            df_sheet.loc[df_sheet["Order ID"] == str(row["Order ID"]), "STATUS"] = row["STATUS"]
 
-        # -----------------------------
-        # Update STATUS
-        # -----------------------------
-        for _,row in edited_df.iterrows():
-
-            order_id = row["Order ID"]
-            new_status = row["STATUS"]
-
-            df_sheet.loc[
-                df_sheet["Order ID"] == str(order_id),
-                "STATUS"
-            ] = new_status
-
-        # -----------------------------
-        # Partial Delivery Update
-        # -----------------------------
+        # Apply partial delivery quantities
         if selected_order:
-
             for update in delivery_updates:
-
-                deliver_now = update["deliver_now"]
-
-                if deliver_now <= 0:
+                if update["deliver_now"] <= 0:
                     continue
+                new_delivered = update["delivered"] + update["deliver_now"]
+                new_pending = update["pending"] - update["deliver_now"]
+                new_status = "Delivered" if new_pending <= 0 else "Partial Delivery"
+                mask = (df_sheet["Order ID"] == str(selected_order)) & (df_sheet["Variety"] == update["variety"])
+                df_sheet.loc[mask, "Delivered Qty"] = new_delivered
+                df_sheet.loc[mask, "Pending Qty"] = max(new_pending, 0)
+                df_sheet.loc[mask, "Delivery Date"] = str(delivery_date)
+                df_sheet.loc[mask, "STATUS"] = new_status
 
-                variety = update["variety"]
-                delivered = update["delivered"]
-                pending = update["pending"]
-
-                new_delivered = delivered + deliver_now
-                new_pending = pending - deliver_now
-
-                if new_pending <= 0:
-                    new_pending = 0
-                    status = "Delivered"
-                else:
-                    status = "Partial Delivery"
-
-                mask = (
-                    (df_sheet["Order ID"] == str(selected_order)) &
-                    (df_sheet["Variety"] == variety)
-                )
-
-                df_sheet.loc[mask,"Delivered Qty"] = new_delivered
-                df_sheet.loc[mask,"Pending Qty"] = new_pending
-                df_sheet.loc[mask,"Delivery Date"] = str(delivery_date)
-                df_sheet.loc[mask,"STATUS"] = status
-
-        # -----------------------------
-        # Clean dataframe
-        # -----------------------------
-        df_sheet = df_sheet.replace([float("inf"), -float("inf")], "")
-        df_sheet = df_sheet.fillna("")
-        df_sheet = df_sheet[headers]
-
-        updated_values = [headers] + df_sheet.values.tolist()
-
-        items_sheet.update(updated_values)
-
-        st.success("Order updated successfully ⚡")
-
+        push_sheet_update(items_sheet, df_sheet, headers)
+        st.success("✅ Orders updated successfully!")
         st.rerun()
-# -----------------------------
-# Footer
-# -----------------------------
+
+# =====================================================
+# PAGE: ORDER HISTORY
+# =====================================================
+elif page == "🔍 Order History":
+
+    st.markdown("### 🔍 Order History")
+
+    records = items_sheet.get_all_records()
+    df = pd.DataFrame(records)
+
+    if df.empty:
+        st.info("No orders found.")
+        st.stop()
+
+    # ── Filters ──────────────────────────────────────
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        shop_filter = st.selectbox("Filter by Shop", ["All"] + sorted(df["Shop Name"].unique().tolist()))
+    with col2:
+        status_filter = st.selectbox("Filter by Status", ["All"] + STATUS_OPTIONS)
+    with col3:
+        agent_filter = st.selectbox("Filter by Agent", ["All"] + sorted(df["Agent Name"].unique().tolist()))
+
+    filtered = df.copy()
+    if shop_filter != "All":
+        filtered = filtered[filtered["Shop Name"] == shop_filter]
+    if status_filter != "All":
+        filtered = filtered[filtered["STATUS"] == status_filter]
+    if agent_filter != "All":
+        filtered = filtered[filtered["Agent Name"] == agent_filter]
+
+    # ── Detect total column name (handles "Item Total", "Item Total", etc.) ──
+    total_col = next((c for c in filtered.columns if "total" in c.lower()), None)
+
+    # ── Summary metrics ──────────────────────────────
+    total_qty = filtered["Quantity (Quintal)"].apply(clean_number).sum() if "Quantity (Quintal)" in filtered.columns else 0
+    total_value = filtered[total_col].apply(clean_number).sum() if total_col else 0
+    unique_orders = filtered["Order ID"].nunique()
+
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Matching Orders", unique_orders)
+    col2.metric("Total Quintals", f"{total_qty:,.1f}")
+    col3.metric("Total Value ₹", f"{total_value:,.0f}")
+
+    st.markdown("---")
+
+    # ── Table ────────────────────────────────────────
+    display_cols = ["Date", "Order ID", "Shop Name", "Agent Name", "Variety",
+                    "Quantity (Quintal)", "Price (₹/Quintal)", total_col, "STATUS"]
+    display_cols = [c for c in display_cols if c]  # remove None if total_col not found
+    available = [c for c in display_cols if c in filtered.columns]
+    st.dataframe(filtered[available], use_container_width=True, hide_index=True)
+
+    # ── CSV Export ───────────────────────────────────
+    csv = filtered[available].to_csv(index=False).encode("utf-8")
+    st.download_button(
+        label="⬇️ Download as CSV",
+        data=csv,
+        file_name=f"orders_export_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
+        mime="text/csv"
+    )
+
+# =====================================================
+# FOOTER
+# =====================================================
 st.markdown("""
 <div class="footer">
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
