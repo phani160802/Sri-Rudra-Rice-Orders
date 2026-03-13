@@ -24,7 +24,7 @@ header {visibility: hidden;}
 }
 .block-container {
     max-width:1000px;
-    padding-top:0.5rem;
+    padding-top:0rem;
     padding-bottom:0rem;
 }
 h1 { text-align:center; color:#8B6F2F; }
@@ -61,14 +61,16 @@ div[data-baseweb="select"] input[type="text"] {
     font-size:42px !important;
     font-weight:bold;
     text-align:center;
+    margin-top:0px;
     margin-bottom:0px;
+    line-height:1.1;
 }
 .brand-subtitle {
     color:#6B5B2A;
     font-size:20px !important;
     text-align:center;
-    margin-top:0px;
-    margin-bottom:20px;
+    margin-top:4px;
+    margin-bottom:4px;
 }
 .item-card {
     background:#fffdf3;
@@ -371,33 +373,29 @@ if "last_wa_link" not in st.session_state:
 st.markdown(
     """
     <style>
+    /* Center the column containing the logo */
+    div[data-testid="stHorizontalBlock"] > div:nth-child(2) {
+        display: flex !important;
+        justify-content: center !important;
+    }
+
     [data-testid="stImage"] {
-        text-align: center !important;
+        display: flex !important;
+        justify-content: center !important;
+    }
+
+    [data-testid="stImage"] img {
         display: block !important;
         margin-left: auto !important;
         margin-right: auto !important;
     }
 
-    [data-testid="stImage"] img {
-        display:block !important;
-        margin-left:auto !important;
-        margin-right:auto !important;
-    }
-
     @media (max-width:768px){
         [data-testid="stImage"] img{
-            max-width:150px !important;
-            margin-left:110px !important;
-            margin-right:0 !important;
+            max-width: 150px !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
         }
-    }
-
-    .main-header {
-        text-align: center;
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
     }
     </style>
     """,
@@ -409,12 +407,12 @@ with col2:
     st.image("logo.PNG", width=200)
 
 st.markdown("""
-<div>
+<div style="text-align:center; margin-top:12px; margin-bottom:0px;">
     <div class="brand-title">Sri Rudra Rice 🌾</div>
     <div class="brand-subtitle">Rice Order Management Portal</div>
+    <hr style="margin-top:10px; margin-bottom:0px; border:none; border-top:1px solid #c8b56e;">
 </div>
 """, unsafe_allow_html=True)
-st.markdown("----")
 
 # =====================================================
 # NAVIGATION
@@ -457,9 +455,7 @@ if page == "📦 Order Booking":
     st.markdown("---")
 
     # ── Live summary placeholders (rendered BEFORE the form) ──
-    summary_placeholder = st.empty()
-
-    # ── Full Order Form (original look preserved) ────
+    # ── Order Form ──────────────────────────────────
     with st.form("order_form"):
         st.markdown("### 🌾 Rice Varieties")
         grand_total = 0.0
@@ -501,24 +497,6 @@ if page == "📦 Order Booking":
             remove_one = st.form_submit_button("➖ Remove Last Item")
         with col_c:
             submit_button = st.form_submit_button("✅ Submit Order", type="primary")
-
-    # ── Recalculate from session state for live summary ──
-    live_total = 0.0
-    live_items = 0
-    for i in range(st.session_state.rice_items):
-        qty = st.session_state.get(f"qty_{i}", 0.0)
-        prc = st.session_state.get(f"price_{i}", 0.0)
-        if qty > 0:
-            live_items += 1
-            live_total += qty * prc
-
-    # Render live summary above the form via placeholder
-    with summary_placeholder.container():
-        st.markdown("### 📊 Live Summary")
-        c1, c2 = st.columns(2)
-        c1.metric("Total Items", live_items)
-        c2.metric("Grand Total ₹", f"{live_total:,.2f}")
-        st.markdown("---")
 
     # ── Form action handlers ─────────────────────────
     if add_more:
