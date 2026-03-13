@@ -364,6 +364,44 @@ if "last_wa_link" not in st.session_state:
 # =====================================================
 # HEADER
 # =====================================================
+
+# Logo alignment CSS (separate block, matching original)
+st.markdown(
+    """
+    <style>
+    [data-testid="stImage"] {
+        text-align: center !important;
+        display: block !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
+
+    [data-testid="stImage"] img {
+        display:block !important;
+        margin-left:auto !important;
+        margin-right:auto !important;
+    }
+
+    @media (max-width:768px){
+        [data-testid="stImage"] img{
+            max-width:150px !important;
+            margin-left:110px !important;
+            margin-right:0 !important;
+        }
+    }
+
+    .main-header {
+        text-align: center;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 col1, col2, col3 = st.columns([1.2, 1, 1])
 with col2:
     st.image("logo.PNG", width=200)
@@ -748,3 +786,4 @@ st.markdown("""
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
+
