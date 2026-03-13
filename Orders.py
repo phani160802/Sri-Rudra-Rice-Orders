@@ -309,10 +309,12 @@ def write_order_to_sheet(items_sheet, summary_sheet, order_id: str, shop: str,
 
 
 def push_sheet_update(items_sheet, df_sheet: pd.DataFrame, headers: list):
-    """Write the full updated dataframe back to the sheet."""
+    """Overwrite the sheet in-place from row 1 — no appends, no duplicates."""
     df_sheet = df_sheet.replace([float("inf"), -float("inf")], "").fillna("")
     df_sheet = df_sheet[headers]
-    items_sheet.update([headers] + df_sheet.values.tolist())
+    # Coerce all values to plain Python types so gspread doesn't choke
+    rows = [[str(v) if v != "" else "" for v in row] for row in df_sheet.values.tolist()]
+    items_sheet.update("A1", [headers] + rows, value_input_option="USER_ENTERED")
 
 
 # =====================================================
@@ -454,7 +456,10 @@ if page == "📦 Order Booking":
 
     st.markdown("---")
 
-    # ── Order Form ──────────────────────────────────
+    # ── Live summary placeholders (rendered BEFORE the form) ──
+    summary_placeholder = st.empty()
+
+    # ── Full Order Form (original look preserved) ────
     with st.form("order_form"):
         st.markdown("### 🌾 Rice Varieties")
         grand_total = 0.0
@@ -481,9 +486,9 @@ if page == "📦 Order Booking":
                 st.markdown("</div>", unsafe_allow_html=True)
 
         st.markdown("## 💰 Order Summary")
+        valid_count = len([i for i in order_details if i["quantity"] > 0])
         col1, col2 = st.columns(2)
         with col1:
-            valid_count = len([i for i in order_details if i["quantity"] > 0])
             st.metric("Total Items", valid_count)
         with col2:
             st.metric("Grand Total ₹", f"{grand_total:,.2f}")
@@ -496,6 +501,24 @@ if page == "📦 Order Booking":
             remove_one = st.form_submit_button("➖ Remove Last Item")
         with col_c:
             submit_button = st.form_submit_button("✅ Submit Order", type="primary")
+
+    # ── Recalculate from session state for live summary ──
+    live_total = 0.0
+    live_items = 0
+    for i in range(st.session_state.rice_items):
+        qty = st.session_state.get(f"qty_{i}", 0.0)
+        prc = st.session_state.get(f"price_{i}", 0.0)
+        if qty > 0:
+            live_items += 1
+            live_total += qty * prc
+
+    # Render live summary above the form via placeholder
+    with summary_placeholder.container():
+        st.markdown("### 📊 Live Summary")
+        c1, c2 = st.columns(2)
+        c1.metric("Total Items", live_items)
+        c2.metric("Grand Total ₹", f"{live_total:,.2f}")
+        st.markdown("---")
 
     # ── Form action handlers ─────────────────────────
     if add_more:
@@ -656,10 +679,16 @@ elif page == "📊 Order Status":
     )
 
     # ── Partial Delivery Form ────────────────────────
+    # Only show if user *changed* a status to Partial Delivery in this session
+    original_statuses = {str(row["Order ID"]): str(row["STATUS"]) for _, row in orders_df.iterrows()}
+
     selected_order = None
     for _, row in edited_df.iterrows():
-        if str(row["STATUS"]).strip() == "Partial Delivery":
-            selected_order = row["Order ID"]
+        order_id_str = str(row["Order ID"])
+        new_status = str(row["STATUS"]).strip()
+        old_status = original_statuses.get(order_id_str, "").strip()
+        if new_status == "Partial Delivery" and old_status != "Partial Delivery":
+            selected_order = order_id_str
             break
 
     delivery_updates = []
@@ -694,9 +723,12 @@ elif page == "📊 Order Status":
         headers = sheet_data[0]
         df_sheet = pd.DataFrame(sheet_data[1:], columns=headers)
 
+        # Normalise Order ID column to string for safe comparison
+        df_sheet["Order ID"] = df_sheet["Order ID"].astype(str).str.strip()
+
         # Apply status changes
         for _, row in edited_df.iterrows():
-            df_sheet.loc[df_sheet["Order ID"] == str(row["Order ID"]), "STATUS"] = row["STATUS"]
+            df_sheet.loc[df_sheet["Order ID"] == str(row["Order ID"]).strip(), "STATUS"] = row["STATUS"]
 
         # Apply partial delivery quantities
         if selected_order:
@@ -706,7 +738,10 @@ elif page == "📊 Order Status":
                 new_delivered = update["delivered"] + update["deliver_now"]
                 new_pending = update["pending"] - update["deliver_now"]
                 new_status = "Delivered" if new_pending <= 0 else "Partial Delivery"
-                mask = (df_sheet["Order ID"] == str(selected_order)) & (df_sheet["Variety"] == update["variety"])
+                mask = (
+                    (df_sheet["Order ID"] == str(selected_order).strip()) &
+                    (df_sheet["Variety"] == update["variety"])
+                )
                 df_sheet.loc[mask, "Delivered Qty"] = new_delivered
                 df_sheet.loc[mask, "Pending Qty"] = max(new_pending, 0)
                 df_sheet.loc[mask, "Delivery Date"] = str(delivery_date)
@@ -786,4 +821,3 @@ st.markdown("""
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
-
