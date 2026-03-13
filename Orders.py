@@ -5,6 +5,16 @@ from datetime import datetime
 import urllib.parse
 import pandas as pd
 
+
+## Helper Functions
+
+def clean_number(value):
+    if value is None or value == "":
+        return 0.0
+    value = str(value)
+    value = value.replace("₹","").replace(",","").strip()
+    return float(value)
+
 st.set_page_config(page_title="Sri Rudra Rice Order Form", layout="wide")
 
 # -----------------------------
@@ -458,9 +468,21 @@ if page == "📦 Order Booking":
         except:
             order_id="1"
         for item in valid_items:
-            items_sheet.append_row([today, order_id, shop_name, contact_number, agent_name,
-                                    item["variety"], item["quantity"], item["price"], item["total"]],
-                                    value_input_option="USER_ENTERED")
+            items_sheet.append_row([
+                    today,
+                    order_id,
+                    shop_name,
+                    contact_number,
+                    agent_name,
+                    item["variety"],
+                    item["quantity"],
+                    item["price"],
+                    item["total"],
+                    0,                       # Delivered Qty
+                    item["quantity"],        # Pending Qty
+                    "",                      # Delivery Date
+                    "Order Accepted"
+                ], value_input_option="USER_ENTERED")
         total_quantity = sum(i["quantity"] for i in valid_items)
         summary_sheet.append_row([today, order_id, shop_name, agent_name, total_quantity, grand_total],
                                  value_input_option="USER_ENTERED")
@@ -506,7 +528,31 @@ else:
         st.stop()
 
     # -----------------------------
-    # Group orders by Order ID
+    # Metrics
+    # -----------------------------
+    grouped_status = df.groupby("Order ID")["STATUS"].apply(list)
+
+    completed_orders = 0
+    pending_orders = 0
+
+    for statuses in grouped_status:
+
+        statuses = [str(s).strip() for s in statuses]
+
+        if all(s == "Delivered" for s in statuses):
+            completed_orders += 1
+        else:
+            pending_orders += 1
+
+    col1, col2 = st.columns(2)
+
+    col1.metric("Pending Orders", pending_orders)
+    col2.metric("Completed Orders", completed_orders)
+
+    st.markdown("---")
+
+    # -----------------------------
+    # Build Dashboard Table
     # -----------------------------
     grouped = df.groupby("Order ID")
 
@@ -515,21 +561,38 @@ else:
     for order_id, group in grouped:
 
         shop = group["Shop Name"].iloc[0]
-        total_qty = group["Quantity (Quintal)"].sum()
 
-        # Clean variety display
+        pending_total = 0
         varieties_list = []
-        for i, row in group.iterrows():
-            qty = float(row["Quantity (Quintal)"])
-            varieties_list.append(f"{row['Variety']} – {qty:g}Q")
+
+        for _,row in group.iterrows():
+
+            total_qty = clean_number(row["Quantity (Quintal)"])
+            delivered = clean_number(row.get("Delivered Qty",0))
+
+            pending = total_qty - delivered
+
+            if pending < 0:
+                pending = 0
+
+            pending_total += pending
+
+            if pending > 0:
+                varieties_list.append(
+                    f"{row['Variety']} – {pending:g}Q"
+                )
+
+        # Check if fully delivered
+        status_values = group["STATUS"].astype(str).str.strip()
+
+        if all(s == "Delivered" for s in status_values):
+            continue
 
         varieties = ", ".join(varieties_list)
 
-        # Clean status
-        status_values = group["STATUS"].astype(str).str.strip().replace("None", "")
-        status_values = status_values[status_values != ""]
+        status_values = status_values[status_values!=""]
 
-        if len(status_values) == 0:
+        if len(status_values)==0:
             status = "Order Accepted"
         else:
             status = status_values.iloc[0]
@@ -537,116 +600,177 @@ else:
         orders.append({
             "Order ID": str(order_id),
             "Shop": shop,
-            "Total Qty": total_qty,
+            "Total Qty": pending_total,
             "Varieties": varieties,
             "STATUS": status
         })
 
     orders_df = pd.DataFrame(orders)
 
-    # -----------------------------
-    # Dashboard Metrics
-    # -----------------------------
-    pending_orders = orders_df[orders_df["STATUS"] != "Delivered"].shape[0]
-    completed_orders = orders_df[orders_df["STATUS"] == "Delivered"].shape[0]
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.markdown(
-            f"""
-            <div style='text-align:center; font-size:20px; font-weight:bold; margin:0; padding:0; color:#2b2b2b;'>
-                Total Pending Orders
-            </div>
-            <div style='text-align:center; font-size:26px; font-weight:normal; margin:0; padding:0; color:#000000;'>
-                {pending_orders}
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-    
-    with col2:
-        st.markdown(
-            f"""
-            <div style='text-align:center; font-size:20px; font-weight:bold; margin:0; padding:0; color:#2b2b2b;'>
-                Total Completed Orders
-            </div>
-            <div style='text-align:center; font-size:26px; font-weight:normal; margin:0; padding:0; color:#000000;'>
-                {completed_orders}
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-    st.markdown("---")
+    if orders_df.empty:
+        st.success("🎉 All orders delivered!")
+        st.stop()
 
     st.markdown("### 📦 Update Order Status")
 
-    # -----------------------------
-    # Filter only NON-delivered orders
-    # -----------------------------
-    pending_orders_df = orders_df[orders_df["STATUS"] != "Delivered"].copy()
+    edited_df = st.data_editor(
+        orders_df,
+        use_container_width=True,
+        hide_index=True,
+        key="orders_editor",
+        column_config={
+            "STATUS": st.column_config.SelectboxColumn(
+                "STATUS",
+                options=[
+                    "Order Accepted",
+                    "Packed",
+                    "Out for Delivery",
+                    "Partial Delivery",
+                    "Delivered"
+                ]
+            )
+        },
+        disabled=["Order ID","Shop","Total Qty","Varieties"]
+    )
 
     # -----------------------------
-    # Session State
+    # Detect Partial Delivery
     # -----------------------------
-    if "orders_table" not in st.session_state:
-        st.session_state.orders_table = pending_orders_df.copy()
+    selected_order = None
 
-    # -----------------------------
-    # FORM (prevents rerun)
-    # -----------------------------
-    with st.form("status_update_form"):
+    for _,row in edited_df.iterrows():
 
-        edited_df = st.data_editor(
-            st.session_state.orders_table,
-            use_container_width=True,
-            hide_index=True,
-            column_config={
-                "STATUS": st.column_config.SelectboxColumn(
-                    "STATUS",
-                    options=[
-                        "Order Accepted",
-                        "Packed",
-                        "Out for Delivery",
-                        "Delivered"
-                    ],
-                    required=True
-                )
-            },
-            disabled=["Order ID", "Shop", "Total Qty", "Varieties"]
-        )
+        if str(row["STATUS"]).strip() == "Partial Delivery":
+            selected_order = row["Order ID"]
 
-        save_button = st.form_submit_button("Save Status Updates")
+    # =====================================================
+    # PARTIAL DELIVERY FORM
+    # =====================================================
 
-    # store edited table
-    st.session_state.orders_table = edited_df
+    delivery_updates = []
 
-    # -----------------------------
-    # SAVE STATUS TO GOOGLE SHEET
-    # -----------------------------
-    if save_button:
+    if selected_order:
 
-        updated_df = st.session_state.orders_table
+        st.markdown("---")
+        st.markdown(f"### 🚚 Partial Delivery – Order {selected_order}")
 
-        for i, row in updated_df.iterrows():
+        order_rows = df[df["Order ID"]==int(selected_order)]
+
+        delivery_date = st.date_input("Delivery Date")
+
+        for i,row in order_rows.iterrows():
+
+            variety = row["Variety"]
+
+            total_qty = clean_number(row["Quantity (Quintal)"])
+            delivered = clean_number(row.get("Delivered Qty",0))
+
+            pending = total_qty - delivered
+
+            if pending <= 0:
+                continue
+
+            col1,col2,col3 = st.columns([2,1,1])
+
+            col1.write(f"**{variety}**")
+            col2.write(f"Pending: {pending}Q")
+
+            deliver_now = col3.number_input(
+                f"Deliver {variety}",
+                min_value=0.0,
+                max_value=pending,
+                step=1.0,
+                key=f"deliver_{i}"
+            )
+
+            delivery_updates.append({
+                "variety": variety,
+                "deliver_now": deliver_now,
+                "pending": pending,
+                "delivered": delivered
+            })
+
+    # =====================================================
+    # UPDATE BUTTON
+    # =====================================================
+
+    update_clicked = st.button("💾 Update Order")
+
+    if update_clicked:
+
+        # Load sheet
+        sheet_data = items_sheet.get_all_values()
+        headers = sheet_data[0]
+        rows = sheet_data[1:]
+
+        df_sheet = pd.DataFrame(rows, columns=headers)
+
+        # -----------------------------
+        # Update STATUS
+        # -----------------------------
+        for _,row in edited_df.iterrows():
 
             order_id = row["Order ID"]
             new_status = row["STATUS"]
 
-            matches = items_sheet.findall(order_id)
+            df_sheet.loc[
+                df_sheet["Order ID"] == str(order_id),
+                "STATUS"
+            ] = new_status
 
-            for cell in matches:
+        # -----------------------------
+        # Partial Delivery Update
+        # -----------------------------
+        if selected_order:
 
-                row_values = items_sheet.row_values(cell.row)
+            for update in delivery_updates:
 
-                if len(row_values) > 1 and row_values[1] == order_id:
+                deliver_now = update["deliver_now"]
 
-                    items_sheet.update_cell(cell.row, 10, new_status)
+                if deliver_now <= 0:
+                    continue
 
-        st.success("All statuses updated successfully")
+                variety = update["variety"]
+                delivered = update["delivered"]
+                pending = update["pending"]
+
+                new_delivered = delivered + deliver_now
+                new_pending = pending - deliver_now
+
+                if new_pending <= 0:
+                    new_pending = 0
+                    status = "Delivered"
+                else:
+                    status = "Partial Delivery"
+
+                mask = (
+                    (df_sheet["Order ID"] == str(selected_order)) &
+                    (df_sheet["Variety"] == variety)
+                )
+
+                df_sheet.loc[mask,"Delivered Qty"] = new_delivered
+                df_sheet.loc[mask,"Pending Qty"] = new_pending
+                df_sheet.loc[mask,"Delivery Date"] = str(delivery_date)
+                df_sheet.loc[mask,"STATUS"] = status
+
+        # -----------------------------
+        # CLEAN DATA (Fix JSON Error)
+        # -----------------------------
+        # Clean dataframe
+        df_sheet = df_sheet.replace([float("inf"), -float("inf")], "")
+        df_sheet = df_sheet.fillna("")
+
+        # IMPORTANT: Ensure column order matches Google Sheet
+        df_sheet = df_sheet[headers]
+
+        updated_values = [headers] + df_sheet.values.tolist()
+
+        items_sheet.update(updated_values)
+
+        st.success("Order updated successfully ⚡")
 
         st.rerun()
+
 
 # -----------------------------
 # Footer
@@ -656,7 +780,6 @@ st.markdown("""
 Sri Lakshmi Venkateswara Rice Industries, Erraguntapalli, Chintalapudi(M), Andhra Pradesh, India
 </div>
 """, unsafe_allow_html=True)
-
 
 
 
