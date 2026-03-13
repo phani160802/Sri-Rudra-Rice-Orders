@@ -48,9 +48,13 @@ div[data-testid="stForm"] {
     border-radius:15px;
     box-shadow:0px 5px 25px rgba(0,0,0,0.08);
 }
-label, div[data-testid="stForm"] label, div[data-testid="stWidgetLabel"] {
+label, div[data-testid="stForm"] label, div[data-testid="stWidgetLabel"]{
     font-weight: bold !important;
     color:#2b2b2b !important;
+}
+
+div[data-baseweb="select"] input[type="text"] {
+    color: #000000 !important;
 }
 .brand-title {
     color:#8B6F2F;
@@ -83,20 +87,130 @@ label, div[data-testid="stForm"] label, div[data-testid="stWidgetLabel"] {
 
 /* Mobile */
 @media (max-width:768px) {
-    .brand-title { font-size:26px !important; margin-left:0 !important; }
-    .brand-subtitle { font-size:18px !important; }
-    h3, h2 { font-size:22px !important; font-weight:bold !important; }
-    .block-container { padding-left:12px !important; padding-right:12px !important; }
-    [data-testid="stMetricValue"] { color:#000 !important; font-size:20px !important; }
-    [data-testid="stMetricLabel"] { color:#2b2b2b !important; font-size:20px !important; font-weight:bold !important; }
-    div[data-testid="stFormSubmitButton"] button,
-    div.stButton > button {
+
+    h3, h2 {
+        font-size: 22px !important;
+        font-weight: bold !important;
+    }
+
+    div[data-testid="stMarkdownContainer"] h3 {
+        font-size: 22px !important;
+        font-weight: bold !important;
+    }
+
+    body, label, span, p {
+        color:#2b2b2b !important;
+    }
+
+    .block-container{
+        padding-left:12px !important;
+        padding-right:12px !important;
+    }
+
+    h1{
+        font-size:26px !important;
+        text-align:center !important;
+    }
+
+    h3{
+        font-size:18px !important;
+        text-align:center !important;
+    }
+
+    img{
+        max-width:150px !important;
+        margin-left:120px !important;
+    }
+
+    [data-testid="stMetricValue"]{
+        color:#000000 !important;
+        font-size:20px !important;
+    }
+
+    [data-testid="stMetricLabel"]{
+        color:#2b2b2b !important;
+    }
+
+    div[data-testid="stFormSubmitButton"] button{
         background-color:#8B6F2F !important;
         color:white !important;
         border:none !important;
         border-radius:8px !important;
         width:100%;
         margin-top:8px;
+    }
+
+    div[data-testid="stFormSubmitButton"] button p{
+        color:white !important;
+    }
+
+    div.stButton > button{
+        background-color:#8B6F2F !important;
+        color:white !important;
+        border:none !important;
+        border-radius:8px !important;
+        width:100%;
+        margin-top:8px;
+    }
+
+    div.stButton > button p{
+        color:white !important;
+    }
+
+    div[data-testid="stHorizontalBlock"]{
+        display:flex !important;
+        flex-direction:row !important;
+    }
+
+    div[data-testid="stHorizontalBlock"] > div{
+        flex:1 !important;
+    }
+
+    [data-testid="stMetricLabel"]{
+        font-size:20px !important;
+        font-weight:bold !important;
+        color:#2b2b2b !important;
+    }
+
+    div[data-testid="stMetricValue"]{
+        font-size:24px !important;
+        font-weight:normal !important;
+        color:#000 !important;
+    }
+
+    div[role="listbox"] div[role="option"] {
+        color: #2b2b2b !important;
+        font-size: 16px !important;
+        font-weight: normal !important;
+        background-color: white !important;
+    }
+
+    .stDataFrameContainer div[data-baseweb="select"] div[class*="singleValue"] {
+        color: #2b2b2b !important;
+        font-weight: normal !important;
+        font-size: 16px !important;
+    }
+
+    .stDataFrameContainer div[data-baseweb="select"] div[class*="option"] {
+        color: #2b2b2b !important;
+        font-weight: normal !important;
+        font-size: 16px !important;
+    }
+
+    .stDataFrameContainer div[data-baseweb="select"] div[class*="menu"] {
+        color: #2b2b2b !important;
+        font-size: 16px !important;
+        font-weight: normal !important;
+    }
+
+    .brand-title{
+        margin-left:0% !important;
+    }
+
+    [data-testid="stImage"] img{
+        max-width:150px !important;
+        margin-left:110px !important;
+        margin-right:0 !important;
     }
 }
 
