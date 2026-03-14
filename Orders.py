@@ -685,14 +685,40 @@ elif page == "📊 Order Status":
             newly_delivered_orders.append(order_id_str)
 
     # ── Partial Delivery Form ──
-    # Collect ALL orders currently set to "Partial Delivery"
-    partial_orders = [
+    # Auto-show for orders just changed TO Partial Delivery
+    newly_partial = [
         str(row["Order ID"])
         for _, row in edited_df.iterrows()
         if str(row["STATUS"]).strip() == "Partial Delivery"
+        and original_statuses.get(str(row["Order ID"]), "").strip() != "Partial Delivery"
     ]
 
-    # delivery_updates is now a dict keyed by order_id
+    # For orders already at Partial Delivery, show a button to trigger the form
+    already_partial = [
+        str(row["Order ID"])
+        for _, row in edited_df.iterrows()
+        if str(row["STATUS"]).strip() == "Partial Delivery"
+        and original_statuses.get(str(row["Order ID"]), "").strip() == "Partial Delivery"
+    ]
+
+    if already_partial:
+        st.markdown("---")
+        st.markdown("**Record another partial delivery for:**")
+        for oid in already_partial:
+            shop_name_for = edited_df.loc[edited_df["Order ID"] == oid, "Shop"].values[0]
+            if st.button(f"🚚 Partial Delivery – Order {oid} ({shop_name_for})", key=f"btn_partial_{oid}"):
+                if "active_partial_orders" not in st.session_state:
+                    st.session_state.active_partial_orders = []
+                if oid not in st.session_state.active_partial_orders:
+                    st.session_state.active_partial_orders.append(oid)
+
+    # Combine newly changed + button-activated orders
+    if "active_partial_orders" not in st.session_state:
+        st.session_state.active_partial_orders = []
+    partial_orders = list(dict.fromkeys(newly_partial + [
+        o for o in st.session_state.active_partial_orders if o in already_partial
+    ]))
+
     delivery_updates = {}
 
     for selected_order in partial_orders:
@@ -782,6 +808,7 @@ elif page == "📊 Order Status":
         items_sheet.update("A1", [raw_headers] + rows_out, value_input_option="USER_ENTERED")
 
         st.success("✅ Orders updated successfully!")
+        st.session_state.active_partial_orders = []
         st.rerun()
 
 # =====================================================
