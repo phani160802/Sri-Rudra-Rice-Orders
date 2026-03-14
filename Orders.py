@@ -156,14 +156,19 @@ div[data-baseweb="select"] input[type="text"] {
     [data-testid="stMetricLabel"]{
         color:#000000 !important;
         font-weight:700 !important;
+        visibility:visible !important;
+        opacity:1 !important;
     }
 
     [data-testid="stMetricLabel"] p,
     [data-testid="stMetricLabel"] span,
+    [data-testid="stMetricLabel"] div,
     [data-testid="stMetricValue"] p,
     [data-testid="stMetricValue"] span,
     [data-testid="stMetricValue"] div {
         color:#000000 !important;
+        visibility:visible !important;
+        opacity:1 !important;
     }
 
     div[data-testid="stFormSubmitButton"] button{
@@ -237,19 +242,29 @@ div[data-baseweb="select"] input[type="text"] {
     }
 
     /* ── metrics-row: bigger, bolder, pure black on mobile ── */
-    .metrics-row [data-testid="stMetricLabel"]{
+    .metrics-row [data-testid="stMetricLabel"],
+    .metrics-row [data-testid="stMetricLabel"] p,
+    .metrics-row [data-testid="stMetricLabel"] span,
+    .metrics-row [data-testid="stMetricLabel"] div {
         font-size:13px !important;
         font-weight:700 !important;
         color:#000000 !important;
         white-space:normal !important;
         word-break:break-word !important;
+        visibility:visible !important;
+        opacity:1 !important;
     }
 
-    .metrics-row [data-testid="stMetricValue"]{
+    .metrics-row [data-testid="stMetricValue"],
+    .metrics-row [data-testid="stMetricValue"] p,
+    .metrics-row [data-testid="stMetricValue"] span,
+    .metrics-row [data-testid="stMetricValue"] div {
         font-size:24px !important;
         font-weight:800 !important;
         color:#000000 !important;
         word-break:break-word !important;
+        visibility:visible !important;
+        opacity:1 !important;
     }
 
     /* ── Remove extra blank space below metrics-row on mobile ── */
