@@ -242,14 +242,8 @@ div[data-baseweb="select"] input[type="text"] {
 
     /* ── Remove extra blank space below metrics-row on mobile ── */
     .metrics-row {
-        margin-bottom:0px !important;
+        margin-bottom:-2rem !important;
         padding-bottom:0px !important;
-    }
-
-    /* Collapse the empty div Streamlit injects after markdown close tags */
-    .metrics-row + div[data-testid="stVerticalBlock"] > div:empty,
-    .metrics-row + div[data-testid="stVerticalBlockBorderWrapper"] > div:empty {
-        display:none !important;
     }
 }
 
