@@ -230,7 +230,7 @@ div[data-baseweb="select"] input[type="text"] {
     .metrics-row [data-testid="stMetricLabel"] p,
     .metrics-row [data-testid="stMetricLabel"] span,
     .metrics-row [data-testid="stMetricLabel"] div {
-        font-size:12px !important;
+        font-size:14px !important;
         font-weight:700 !important;
         color:#000000 !important;
         white-space:normal !important;
