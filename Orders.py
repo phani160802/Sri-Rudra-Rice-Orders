@@ -155,8 +155,8 @@ header[data-testid="stHeader"] {
 footer                           { display: none !important; }
 .block-container {
     max-width: 1000px;
-    padding-top: 2rem !important;
-    margin-top: -2rem !important;
+    padding-top: 0.5rem !important;
+    margin-top: 0 !important;
     padding-bottom: 0;
 }
 [data-testid="stSidebarCollapsedControl"] {
@@ -956,18 +956,25 @@ elif selected == "🔐 Admin Page":
 
                 updated_statuses = {}
                 for _, row in order_rows.iterrows():
-                    col1, col2, col3, col4 = st.columns([2, 1, 1, 2])
-                    col1.markdown(f"**{row['Variety']}**")
-                    col2.markdown(f"{row['Delivered Qty']} Q")
-                    col3.markdown(f"₹{row['Price (₹/Quintal)']}/Q")
-                    current = str(row["Payment Status"]).strip()
-                    new_status = col4.selectbox(
-                        "Status",
-                        options=["Pending", "Received"],
-                        index=0 if current.lower() != "received" else 1,
-                        key=f"pay_status_{selected_order_id}_{row['Variety']}"
-                    )
-                    updated_statuses[row["Variety"]] = new_status
+                    with st.container():
+                        st.markdown(f"""
+                        <div style="background:#fffdf3; border:1px solid #e0c96e; border-radius:10px;
+                                    padding:10px 14px; margin-bottom:4px;">
+                            <div style="font-weight:700; font-size:15px; color:#2b2b2b;">{row['Variety']}</div>
+                            <div style="font-size:13px; color:#666; margin-top:2px;">
+                                {row['Delivered Qty']} Q &nbsp;&middot;&nbsp; &#8377;{row['Price (&#8377;/Quintal)']}/Q
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        current = str(row["Payment Status"]).strip()
+                        new_status = st.selectbox(
+                            "Payment Status",
+                            options=["Pending", "Received"],
+                            index=0 if current.lower() != "received" else 1,
+                            key=f"pay_status_{selected_order_id}_{row['Variety']}",
+                            label_visibility="collapsed"
+                        )
+                        updated_statuses[row["Variety"]] = new_status
 
                 st.markdown("")
                 if st.button("💾 Save Payment Status", type="primary", key="save_payment_btn"):
