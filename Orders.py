@@ -87,6 +87,16 @@ div[data-baseweb="select"] input[type="text"] {
     font-weight:600;
 }
 
+/* Global metric label — pure black, bold */
+[data-testid="stMetricLabel"] {
+    color:#000000 !important;
+    font-weight:700 !important;
+}
+
+[data-testid="stMetricValue"] {
+    color:#000000 !important;
+}
+
 /* Mobile */
 @media (max-width:768px) {
 
@@ -124,15 +134,6 @@ div[data-baseweb="select"] input[type="text"] {
         margin-left:120px !important;
     }
 
-    [data-testid="stMetricValue"]{
-        color:#000000 !important;
-        font-size:20px !important;
-    }
-
-    [data-testid="stMetricLabel"]{
-        color:#2b2b2b !important;
-    }
-
     div[data-testid="stFormSubmitButton"] button{
         background-color:#8B6F2F !important;
         color:white !important;
@@ -159,25 +160,33 @@ div[data-baseweb="select"] input[type="text"] {
         color:white !important;
     }
 
+    /* Keep metric columns side by side on mobile */
     div[data-testid="stHorizontalBlock"]{
         display:flex !important;
         flex-direction:row !important;
+        flex-wrap:wrap !important;
     }
 
     div[data-testid="stHorizontalBlock"] > div{
-        flex:1 !important;
+        flex:1 1 30% !important;
+        min-width:0 !important;
     }
 
+    /* Metric label — black, bold, wrappable */
     [data-testid="stMetricLabel"]{
-        font-size:20px !important;
-        font-weight:bold !important;
-        color:#2b2b2b !important;
+        font-size:11px !important;
+        font-weight:700 !important;
+        color:#000000 !important;
+        white-space:normal !important;
+        word-break:break-word !important;
     }
 
-    div[data-testid="stMetricValue"]{
-        font-size:24px !important;
-        font-weight:normal !important;
-        color:#000 !important;
+    /* Metric value — readable size */
+    [data-testid="stMetricValue"]{
+        font-size:18px !important;
+        font-weight:bold !important;
+        color:#000000 !important;
+        word-break:break-word !important;
     }
 
     div[role="listbox"] div[role="option"] {
@@ -243,20 +252,14 @@ ITEMS_HEADERS = [
 # =====================================================
 
 def clean_number(value) -> float:
-    """Safely parse a number from a cell value."""
     if value is None or value == "":
         return 0.0
     return float(str(value).replace("₹", "").replace(",", "").strip())
 
 
 def generate_order_id(sheet) -> str:
-    """
-    Generate a collision-safe order ID by reading the latest value
-    from the sheet at submission time, not cached.
-    Falls back to a UUID fragment if the sheet is unreadable.
-    """
     try:
-        values = sheet.col_values(2)[1:]  # col B = Order ID
+        values = sheet.col_values(2)[1:]
         existing = [int(v) for v in values if v.strip().isdigit()]
         return str(max(existing) + 1) if existing else "1"
     except Exception:
@@ -264,7 +267,6 @@ def generate_order_id(sheet) -> str:
 
 
 def build_whatsapp_link(contact: str, shop: str, items: list, grand_total: float) -> str:
-    """Build a WhatsApp pre-filled message link."""
     phone = "".join(filter(str.isdigit, contact))
     if len(phone) == 10:
         phone = "91" + phone
@@ -278,7 +280,6 @@ def build_whatsapp_link(contact: str, shop: str, items: list, grand_total: float
 
 
 def determine_order_status(status_values: list) -> str:
-    """Derive the display status for an order from its line-item statuses."""
     statuses = [str(s).strip() for s in status_values]
     if all(s == "Delivered" for s in statuses):
         return "Delivered"
@@ -293,7 +294,6 @@ def determine_order_status(status_values: list) -> str:
 
 def write_order_to_sheet(items_sheet, summary_sheet, order_id: str, shop: str,
                           contact: str, agent: str, valid_items: list, grand_total: float):
-    """Append all line items + summary row for a new order."""
     today = datetime.now().strftime("%Y-%m-%d")
     rows = [
         [
@@ -311,7 +311,6 @@ def write_order_to_sheet(items_sheet, summary_sheet, order_id: str, shop: str,
 
 
 def push_sheet_update(items_sheet, df_sheet: pd.DataFrame, headers: list):
-    """Overwrite the sheet in-place from row 1 — no appends, no duplicates."""
     df_sheet = df_sheet.replace([float("inf"), -float("inf")], "").fillna("")
     df_sheet = df_sheet[headers]
     rows = [[str(v) if v != "" else "" for v in row] for row in df_sheet.values.tolist()]
@@ -340,7 +339,6 @@ items_sheet, summary_sheet = get_sheets()
 
 @st.cache_data(ttl=60)
 def load_shops():
-    """Load shop -> phone/agent lookup from the sheet."""
     records = items_sheet.get_all_records()
     shop_phone, shop_agent = {}, {}
     for r in records:
@@ -435,7 +433,6 @@ if page == "📦 Order Booking":
             key="shop_name"
         )
 
-    # Auto-fill known shop details
     if shop_name in shop_phone:
         st.session_state.contact_number = shop_phone.get(shop_name, "")
         st.session_state.agent_name = shop_agent.get(shop_name, "")
@@ -447,7 +444,6 @@ if page == "📦 Order Booking":
 
     st.markdown("---")
 
-    # ── Order Form ──────────────────────────────────
     with st.form("order_form"):
         st.markdown("### 🌾 Rice Varieties")
         grand_total = 0.0
@@ -490,7 +486,6 @@ if page == "📦 Order Booking":
         with col_c:
             submit_button = st.form_submit_button("✅ Submit Order", type="primary")
 
-    # ── Form action handlers ─────────────────────────
     if add_more:
         st.session_state.rice_items += 1
         st.rerun()
@@ -521,7 +516,6 @@ if page == "📦 Order Booking":
         order_id = generate_order_id(items_sheet)
         write_order_to_sheet(items_sheet, summary_sheet, order_id, shop_name,
                              contact_number, agent_name, valid_items, grand_total)
-
         load_shops.clear()
 
         st.session_state.last_order_id = order_id
@@ -559,7 +553,6 @@ elif page == "📊 Order Status":
         st.info("No orders found.")
         st.stop()
 
-    # ── Metrics ─────────────────────────────────────
     grouped_status = df.groupby("Order ID")["STATUS"].apply(list)
     completed_orders = sum(1 for s in grouped_status if all(x.strip() == "Delivered" for x in s))
     pending_orders = len(grouped_status) - completed_orders
@@ -570,12 +563,10 @@ elif page == "📊 Order Status":
     col3.metric("Total Orders", len(grouped_status))
     st.markdown("---")
 
-    # ── Search / Filter ──────────────────────────────
     all_shops_in_orders = sorted(df["Shop Name"].dropna().unique().tolist())
 
     col_search1, col_search2 = st.columns([2, 1])
     with col_search1:
-        # Searchable auto-fill shop selectbox (same style as Order Booking page)
         selected_shop = st.selectbox(
             "🏪 Filter by Shop Name",
             options=["All Shops"] + all_shops_in_orders,
@@ -587,7 +578,6 @@ elif page == "📊 Order Status":
     with col_search2:
         search_query = st.text_input("🔍 Search by Order ID", placeholder="e.g. 42")
 
-    # ── Build dashboard table ────────────────────────
     grouped = df.groupby("Order ID")
     orders = []
 
@@ -623,11 +613,9 @@ elif page == "📊 Order Status":
         st.success("🎉 All orders delivered!")
         st.stop()
 
-    # Apply shop filter
     if selected_shop != "All Shops":
         orders_df = orders_df[orders_df["Shop"] == selected_shop]
 
-    # Apply Order ID text filter
     if search_query:
         orders_df = orders_df[orders_df["Order ID"].str.contains(search_query.strip())]
 
@@ -637,7 +625,6 @@ elif page == "📊 Order Status":
 
     st.markdown("### 📦 Update Order Status")
 
-    # ── Capture original statuses BEFORE the editor ──
     original_statuses = {str(row["Order ID"]): str(row["STATUS"]) for _, row in orders_df.iterrows()}
 
     edited_df = st.data_editor(
@@ -696,7 +683,6 @@ elif page == "📊 Order Status":
                 "pending": pending, "delivered": delivered
             })
 
-    # ── Update Button ────────────────────────────────
     if st.button("💾 Update Orders", type="primary"):
         sheet_data = items_sheet.get_all_values()
 
@@ -708,19 +694,16 @@ elif page == "📊 Order Status":
         df_sheet = df_sheet.applymap(lambda x: x.strip() if isinstance(x, str) else x)
         df_sheet["Order ID"] = df_sheet["Order ID"].astype(str).str.strip()
 
-        # ── Apply status changes ──────────────────────
         for _, row in edited_df.iterrows():
             order_id_str = str(row["Order ID"]).strip()
             new_status = str(row["STATUS"]).strip()
             old_status = original_statuses.get(order_id_str, "").strip()
 
-            # Always update STATUS column
             df_sheet.loc[
                 df_sheet["Order ID"] == order_id_str,
                 "STATUS"
             ] = new_status
 
-            # If changed to Delivered, auto-fill all qty fields with today's date — no prompt
             if new_status == "Delivered" and old_status != "Delivered":
                 delivery_date_str = datetime.now().strftime("%Y-%m-%d")
                 order_mask = df_sheet["Order ID"] == order_id_str
@@ -730,7 +713,6 @@ elif page == "📊 Order Status":
                     df_sheet.at[idx, "Pending Qty"] = "0"
                     df_sheet.at[idx, "Delivery Date"] = delivery_date_str
 
-        # ── Apply partial delivery quantities ─────────
         if selected_order:
             for update in delivery_updates:
                 if update["deliver_now"] <= 0:
@@ -754,7 +736,6 @@ elif page == "📊 Order Status":
                 df_sheet.loc[mask, "Delivery Date"] = str(delivery_date)
                 df_sheet.loc[mask, "STATUS"] = new_status
 
-        # Write back
         df_sheet = df_sheet.replace([float("inf"), -float("inf")], "").fillna("")
         rows_out = [[str(v) if v != "" else "" for v in row] for row in df_sheet.values.tolist()]
         items_sheet.update("A1", [raw_headers] + rows_out, value_input_option="USER_ENTERED")
@@ -776,7 +757,6 @@ elif page == "🔍 Order History":
         st.info("No orders found.")
         st.stop()
 
-    # ── Filters ──────────────────────────────────────
     col1, col2, col3 = st.columns(3)
     with col1:
         shop_filter = st.selectbox(
@@ -800,10 +780,8 @@ elif page == "🔍 Order History":
     if agent_filter != "All":
         filtered = filtered[filtered["Agent Name"] == agent_filter]
 
-    # ── Detect total column name ──────────────────────
     total_col = next((c for c in filtered.columns if "total" in c.lower()), None)
 
-    # ── Summary metrics ──────────────────────────────
     total_qty = filtered["Quantity (Quintal)"].apply(clean_number).sum() if "Quantity (Quintal)" in filtered.columns else 0
     total_value = filtered[total_col].apply(clean_number).sum() if total_col else 0
     unique_orders = filtered["Order ID"].nunique()
@@ -815,14 +793,12 @@ elif page == "🔍 Order History":
 
     st.markdown("---")
 
-    # ── Table ────────────────────────────────────────
     display_cols = ["Date", "Order ID", "Shop Name", "Agent Name", "Variety",
                     "Quantity (Quintal)", "Price (₹/Quintal)", total_col, "STATUS"]
     display_cols = [c for c in display_cols if c]
     available = [c for c in display_cols if c in filtered.columns]
     st.dataframe(filtered[available], use_container_width=True, hide_index=True)
 
-    # ── CSV Export ───────────────────────────────────
     csv = filtered[available].to_csv(index=False).encode("utf-8")
     st.download_button(
         label="⬇️ Download as CSV",
