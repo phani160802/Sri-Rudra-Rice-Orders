@@ -685,21 +685,23 @@ elif page == "📊 Order Status":
             newly_delivered_orders.append(order_id_str)
 
     # ── Partial Delivery Form ──
-    # Show for any order whose current STATUS is "Partial Delivery" (new or existing)
-    selected_order = None
-    for _, row in edited_df.iterrows():
-        if str(row["STATUS"]).strip() == "Partial Delivery":
-            selected_order = str(row["Order ID"])
-            break
+    # Collect ALL orders currently set to "Partial Delivery"
+    partial_orders = [
+        str(row["Order ID"])
+        for _, row in edited_df.iterrows()
+        if str(row["STATUS"]).strip() == "Partial Delivery"
+    ]
 
-    delivery_updates = []
+    # delivery_updates is now a dict keyed by order_id
+    delivery_updates = {}
 
-    if selected_order:
+    for selected_order in partial_orders:
         st.markdown("---")
         st.markdown(f"### 🚚 Partial Delivery – Order {selected_order}")
-        order_rows = df[df["Order ID"].astype(str).str.strip() == str(selected_order).strip()]
-        delivery_date = st.date_input("Delivery Date", key="partial_delivery_date")
+        order_rows = df[df["Order ID"].astype(str).str.strip() == selected_order.strip()]
+        delivery_date = st.date_input("Delivery Date", key=f"partial_delivery_date_{selected_order}")
 
+        order_updates = []
         for i, row in order_rows.iterrows():
             variety = row["Variety"]
             total_qty = clean_number(row["Quantity (Quintal)"])
@@ -711,12 +713,15 @@ elif page == "📊 Order Status":
             col1.write(f"**{variety}**")
             col2.write(f"Pending: {pending}Q")
             deliver_now = col3.number_input(
-                f"Deliver {variety}", min_value=0.0, max_value=pending, step=1.0, key=f"deliver_{i}"
+                f"Deliver {variety}", min_value=0.0, max_value=pending, step=1.0,
+                key=f"deliver_{selected_order}_{i}"
             )
-            delivery_updates.append({
+            order_updates.append({
                 "variety": variety, "deliver_now": deliver_now,
-                "pending": pending, "delivered": delivered
+                "pending": pending, "delivered": delivered,
+                "delivery_date": delivery_date
             })
+        delivery_updates[selected_order] = order_updates
 
     if st.button("💾 Update Orders", type="primary"):
         sheet_data = items_sheet.get_all_values()
@@ -748,28 +753,29 @@ elif page == "📊 Order Status":
                     df_sheet.at[idx, "Pending Qty"] = "0"
                     df_sheet.at[idx, "Delivery Date"] = delivery_date_str
 
-        if selected_order:
-            for update in delivery_updates:
-                if update["deliver_now"] <= 0:
-                    continue
-                new_delivered = update["delivered"] + update["deliver_now"]
-                new_pending = max(update["pending"] - update["deliver_now"], 0)
-                new_status = "Delivered" if new_pending <= 0 else "Partial Delivery"
+        if delivery_updates:
+            for selected_order, updates in delivery_updates.items():
+                for update in updates:
+                    if update["deliver_now"] <= 0:
+                        continue
+                    new_delivered = update["delivered"] + update["deliver_now"]
+                    new_pending = max(update["pending"] - update["deliver_now"], 0)
+                    new_status = "Delivered" if new_pending <= 0 else "Partial Delivery"
 
-                mask = (
-                    (df_sheet["Order ID"] == str(selected_order).strip()) &
-                    (df_sheet["Variety"].str.strip() == str(update["variety"]).strip())
-                )
+                    mask = (
+                        (df_sheet["Order ID"] == str(selected_order).strip()) &
+                        (df_sheet["Variety"].str.strip() == str(update["variety"]).strip())
+                    )
 
-                if mask.sum() == 0:
-                    st.warning(f"⚠️ No matching row found for: Order {selected_order}, Variety '{update['variety']}'")
-                    st.info(f"Available varieties: {df_sheet[df_sheet['Order ID'] == str(selected_order).strip()]['Variety'].tolist()}")
-                    continue
+                    if mask.sum() == 0:
+                        st.warning(f"⚠️ No matching row found for: Order {selected_order}, Variety '{update['variety']}'")
+                        st.info(f"Available varieties: {df_sheet[df_sheet['Order ID'] == str(selected_order).strip()]['Variety'].tolist()}")
+                        continue
 
-                df_sheet.loc[mask, "Delivered Qty"] = str(new_delivered)
-                df_sheet.loc[mask, "Pending Qty"] = str(new_pending)
-                df_sheet.loc[mask, "Delivery Date"] = str(delivery_date)
-                df_sheet.loc[mask, "STATUS"] = new_status
+                    df_sheet.loc[mask, "Delivered Qty"] = str(new_delivered)
+                    df_sheet.loc[mask, "Pending Qty"] = str(new_pending)
+                    df_sheet.loc[mask, "Delivery Date"] = str(update["delivery_date"])
+                    df_sheet.loc[mask, "STATUS"] = new_status
 
         df_sheet = df_sheet.replace([float("inf"), -float("inf")], "").fillna("")
         rows_out = [[str(v) if v != "" else "" for v in row] for row in df_sheet.values.tolist()]
