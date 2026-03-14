@@ -96,7 +96,7 @@ div[data-baseweb="select"] input[type="text"] {
     color:#000000 !important;
 }
 
-/* ── Metrics row: always side by side ── */
+/* ── Metrics row (Order Booking): always side by side, no wrap ── */
 .metrics-row > div[data-testid="stHorizontalBlock"] {
     display:flex !important;
     flex-direction:row !important;
@@ -105,6 +105,18 @@ div[data-baseweb="select"] input[type="text"] {
 }
 .metrics-row > div[data-testid="stHorizontalBlock"] > div {
     flex:1 1 0 !important;
+    min-width:0 !important;
+}
+
+/* ── Metrics row (Order Status / History): wrap-friendly on mobile ── */
+.metrics-row-status > div[data-testid="stHorizontalBlock"] {
+    display:flex !important;
+    flex-direction:row !important;
+    flex-wrap:wrap !important;
+    gap:6px !important;
+}
+.metrics-row-status > div[data-testid="stHorizontalBlock"] > div {
+    flex:1 1 30% !important;
     min-width:0 !important;
 }
 
@@ -233,6 +245,18 @@ div[data-baseweb="select"] input[type="text"] {
     }
 
     .metrics-row [data-testid="stMetricValue"]{
+        font-size:18px !important;
+        word-break:break-word !important;
+    }
+
+    /* Metrics inside .metrics-row-status (Order Status / History) — tighter font on mobile */
+    .metrics-row-status [data-testid="stMetricLabel"]{
+        font-size:11px !important;
+        white-space:normal !important;
+        word-break:break-word !important;
+    }
+
+    .metrics-row-status [data-testid="stMetricValue"]{
         font-size:18px !important;
         word-break:break-word !important;
     }
@@ -484,11 +508,13 @@ if page == "📦 Order Booking":
 
         st.markdown("## 💰 Order Summary")
         valid_count = len([i for i in order_details if i["quantity"] > 0])
+        st.markdown('<div class="metrics-row">', unsafe_allow_html=True)
         col1, col2 = st.columns(2)
         with col1:
             st.metric("Total Items", valid_count)
         with col2:
             st.metric("Grand Total ₹", f"{grand_total:,.2f}")
+        st.markdown('</div>', unsafe_allow_html=True)
         st.markdown("---")
 
         col_a, col_b, col_c = st.columns([1, 1, 1])
@@ -570,10 +596,12 @@ elif page == "📊 Order Status":
     completed_orders = sum(1 for s in grouped_status if all(x.strip() == "Delivered" for x in s))
     pending_orders = len(grouped_status) - completed_orders
 
+    st.markdown('<div class="metrics-row-status">', unsafe_allow_html=True)
     col1, col2, col3 = st.columns(3)
     col1.metric("Pending Orders", pending_orders)
     col2.metric("Completed Orders", completed_orders)
     col3.metric("Total Orders", len(grouped_status))
+    st.markdown('</div>', unsafe_allow_html=True)
     st.markdown("---")
 
     all_shops_in_orders = sorted(df["Shop Name"].dropna().unique().tolist())
@@ -803,10 +831,12 @@ elif page == "🔍 Order History":
     total_value = filtered[total_col].apply(clean_number).sum() if total_col else 0
     unique_orders = filtered["Order ID"].nunique()
 
+    st.markdown('<div class="metrics-row-status">', unsafe_allow_html=True)
     col1, col2, col3 = st.columns(3)
     col1.metric("Matching Orders", unique_orders)
     col2.metric("Total Quintals", f"{total_qty:,.1f}")
     col3.metric("Total Value ₹", f"{total_value:,.0f}")
+    st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("---")
 
