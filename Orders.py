@@ -230,7 +230,7 @@ div[data-baseweb="select"] input[type="text"] {
     .metrics-row [data-testid="stMetricLabel"] p,
     .metrics-row [data-testid="stMetricLabel"] span,
     .metrics-row [data-testid="stMetricLabel"] div {
-        font-size:13px !important;
+        font-size:12px !important;
         font-weight:700 !important;
         color:#000000 !important;
         white-space:normal !important;
@@ -243,8 +243,8 @@ div[data-baseweb="select"] input[type="text"] {
     .metrics-row [data-testid="stMetricValue"] p,
     .metrics-row [data-testid="stMetricValue"] span,
     .metrics-row [data-testid="stMetricValue"] div {
-        font-size:24px !important;
-        font-weight:800 !important;
+        font-size:18px !important;
+        font-weight:700 !important;
         color:#000000 !important;
         word-break:break-word !important;
         visibility:visible !important;
