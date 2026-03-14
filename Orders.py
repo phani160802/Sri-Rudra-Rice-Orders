@@ -105,9 +105,9 @@ def html_block(html: str, height: int, scrolling: bool = False):
     """Render an HTML block with consistent font injection."""
     components.html(FONT_STYLE + html, height=height, scrolling=scrolling)
 
-def card_list_height(n_items: int, item_px: int = 90, padding: int = 20) -> int:
-    """Calculate tight height for a vertical list of n cards."""
-    return n_items * item_px + padding
+def card_list_height(n_items: int, item_px: int = 90, padding: int = 40) -> int:
+    """Calculate height for a vertical list of n cards with generous buffer."""
+    return max(n_items * item_px + padding, 120)
 
 # =====================================================
 # GOOGLE SHEETS CONNECTION
@@ -1050,30 +1050,32 @@ elif selected == "🔐 Admin Page":
         if due_eligible.empty:
             st.info("No delivered orders found.")
         else:
-            order_groups = due_eligible.groupby(["Order ID", "Shop Name", "Agent Name"])
-            due_rows = []
-            for (order_id, shop, agent), grp in order_groups:
+            # ── Group by Shop Name — aggregate all unpaid orders per shop ──
+            shop_due = {}
+            for shop, grp in due_eligible.groupby("Shop Name"):
                 unpaid_rows = grp[grp["Payment Status"].str.strip().str.lower() != "received"]
                 if unpaid_rows.empty:
                     continue
-                latest_date  = grp["Delivery Date"].max()
-                days_since   = (today - latest_date).days
-                total_value  = grp[total_col_a].sum() if total_col_a else 0
-                unpaid_value = (unpaid_rows["Delivered Qty"] * unpaid_rows["Price (₹/Quintal)"]).sum()
-                due_rows.append({
-                    "order_id":    str(order_id),
-                    "shop":        shop,
-                    "agent":       agent,
-                    "latest_date": latest_date.strftime("%Y-%m-%d"),
-                    "total_value": total_value,
-                    "unpaid":      unpaid_value,
-                    "days":        days_since,
-                })
+                unpaid_value  = (unpaid_rows["Delivered Qty"] * unpaid_rows["Price (₹/Quintal)"]).sum()
+                total_value   = grp[total_col_a].sum() if total_col_a else 0
+                latest_date   = grp["Delivery Date"].max()
+                days_since    = (today - latest_date).days
+                pending_orders = grp["Order ID"].nunique()
+                agent         = grp["Agent Name"].iloc[0]
+                shop_due[shop] = {
+                    "shop":            shop,
+                    "agent":           agent,
+                    "latest_date":     latest_date.strftime("%Y-%m-%d"),
+                    "total_value":     total_value,
+                    "unpaid":          unpaid_value,
+                    "days":            days_since,
+                    "pending_orders":  pending_orders,
+                }
 
-            if not due_rows:
+            if not shop_due:
                 st.success("🎉 All payments received!")
             else:
-                due_rows_sorted = sorted(due_rows, key=lambda x: -x["days"])
+                due_rows_sorted = sorted(shop_due.values(), key=lambda x: -x["unpaid"])
                 due_tracker_html = ""
                 for r in due_rows_sorted:
                     if r["days"] > 15:
@@ -1084,22 +1086,21 @@ elif selected == "🔐 Admin Page":
                         bg, border, badge = "#f9f9f9", "#95a5a6", f'<span style="background:#95a5a6; color:white; border-radius:4px; padding:2px 8px; font-size:11px;">🟢 {r["days"]}d</span>'
                     due_tracker_html += f"""
                     <div style="background:{bg}; border-left:4px solid {border}; border-radius:8px;
-                                padding:12px 16px; margin-bottom:8px; box-shadow:0 1px 4px rgba(0,0,0,0.05);">
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                                padding:12px 16px; margin-bottom:10px; box-shadow:0 1px 4px rgba(0,0,0,0.05);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
                             <div>
-                                <span style="font-weight:700; font-size:15px;">Order {r['order_id']}</span>
-                                &nbsp;·&nbsp;<span style="color:#555;">{r['shop']}</span>
+                                <span style="font-weight:700; font-size:16px; color:#2b2b2b;">🏪 {r['shop']}</span>
                                 &nbsp;·&nbsp;<span style="color:#888; font-size:13px;">{r['agent']}</span>
                             </div>
                             {badge}
                         </div>
-                        <div style="display:flex; gap:24px; margin-top:8px; font-size:13px; color:#666;">
-                            <span>📅 Delivered: {r['latest_date']}</span>
-                            <span>🧾 Order: &#8377;{r['total_value']:,.0f}</span>
-                            <span style="font-weight:700; color:#e74c3c;">💸 Unpaid: &#8377;{r['unpaid']:,.0f}</span>
+                        <div style="display:flex; flex-wrap:wrap; gap:16px; margin-top:8px; font-size:13px; color:#666;">
+                            <span>📦 {r['pending_orders']} pending order(s)</span>
+                            <span>📅 Last delivery: {r['latest_date']}</span>
+                            <span style="font-weight:700; color:#e74c3c; font-size:15px;">💸 Unpaid: &#8377;{r['unpaid']:,.0f}</span>
                         </div>
                     </div>"""
-                html_block(due_tracker_html, height=card_list_height(len(due_rows), item_px=88), scrolling=True)
+                html_block(due_tracker_html, height=card_list_height(len(due_rows_sorted), item_px=100) + 40, scrolling=True)
 
     # ══════════════════════════════
     # TAB 3 — EMPLOYEE PERFORMANCE
