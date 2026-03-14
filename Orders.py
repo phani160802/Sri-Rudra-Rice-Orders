@@ -95,7 +95,7 @@ div[data-baseweb="select"] input[type="text"] {
     color:#000000 !important;
 }
 
-/* Metrics row container — forces side-by-side on mobile */
+/* ── Metrics row: always side by side ── */
 .metrics-row > div[data-testid="stHorizontalBlock"] {
     display:flex !important;
     flex-direction:row !important;
@@ -144,6 +144,16 @@ div[data-baseweb="select"] input[type="text"] {
         margin-left:120px !important;
     }
 
+    [data-testid="stMetricValue"]{
+        color:#000000 !important;
+        font-size:20px !important;
+    }
+
+    [data-testid="stMetricLabel"]{
+        color:#000000 !important;
+        font-weight:700 !important;
+    }
+
     div[data-testid="stFormSubmitButton"] button{
         background-color:#8B6F2F !important;
         color:white !important;
@@ -170,21 +180,13 @@ div[data-baseweb="select"] input[type="text"] {
         color:white !important;
     }
 
-    /* Metric label — black, bold, wrappable */
-    [data-testid="stMetricLabel"]{
-        font-size:11px !important;
-        font-weight:700 !important;
-        color:#000000 !important;
-        white-space:normal !important;
-        word-break:break-word !important;
+    div[data-testid="stHorizontalBlock"]{
+        display:flex !important;
+        flex-direction:row !important;
     }
 
-    /* Metric value — readable size */
-    [data-testid="stMetricValue"]{
-        font-size:18px !important;
-        font-weight:bold !important;
-        color:#000000 !important;
-        word-break:break-word !important;
+    div[data-testid="stHorizontalBlock"] > div{
+        flex:1 !important;
     }
 
     div[role="listbox"] div[role="option"] {
@@ -220,6 +222,18 @@ div[data-baseweb="select"] input[type="text"] {
         max-width:150px !important;
         margin-left:110px !important;
         margin-right:0 !important;
+    }
+
+    /* Metrics inside .metrics-row — tighter font on mobile */
+    .metrics-row [data-testid="stMetricLabel"]{
+        font-size:11px !important;
+        white-space:normal !important;
+        word-break:break-word !important;
+    }
+
+    .metrics-row [data-testid="stMetricValue"]{
+        font-size:18px !important;
+        word-break:break-word !important;
     }
 }
 
@@ -555,7 +569,7 @@ elif page == "📊 Order Status":
     completed_orders = sum(1 for s in grouped_status if all(x.strip() == "Delivered" for x in s))
     pending_orders = len(grouped_status) - completed_orders
 
-    # Wrap metrics in a div with class "metrics-row" so CSS targets only these columns
+    # metrics-row wrapper keeps these 3 columns side by side on mobile
     st.markdown('<div class="metrics-row">', unsafe_allow_html=True)
     col1, col2, col3 = st.columns(3)
     col1.metric("Pending Orders", pending_orders)
@@ -792,7 +806,7 @@ elif page == "🔍 Order History":
     total_value = filtered[total_col].apply(clean_number).sum() if total_col else 0
     unique_orders = filtered["Order ID"].nunique()
 
-    # Wrap metrics in a div with class "metrics-row" so CSS targets only these columns
+    # metrics-row wrapper keeps these 3 columns side by side on mobile
     st.markdown('<div class="metrics-row">', unsafe_allow_html=True)
     col1, col2, col3 = st.columns(3)
     col1.metric("Matching Orders", unique_orders)
