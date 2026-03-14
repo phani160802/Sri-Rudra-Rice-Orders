@@ -108,18 +108,6 @@ div[data-baseweb="select"] input[type="text"] {
     min-width:0 !important;
 }
 
-/* ── Metrics row (Order Status / History): wrap-friendly on mobile ── */
-.metrics-row-status > div[data-testid="stHorizontalBlock"] {
-    display:flex !important;
-    flex-direction:row !important;
-    flex-wrap:wrap !important;
-    gap:6px !important;
-}
-.metrics-row-status > div[data-testid="stHorizontalBlock"] > div {
-    flex:1 1 30% !important;
-    min-width:0 !important;
-}
-
 /* Mobile */
 @media (max-width:768px) {
 
@@ -193,13 +181,56 @@ div[data-baseweb="select"] input[type="text"] {
         color:white !important;
     }
 
+    /* ── Order Booking: keep 2-metric summary row side by side, no wrap ── */
+    .metrics-row > div[data-testid="stHorizontalBlock"] {
+        display:flex !important;
+        flex-direction:row !important;
+        flex-wrap:nowrap !important;
+        gap:6px !important;
+    }
+    .metrics-row > div[data-testid="stHorizontalBlock"] > div {
+        flex:1 1 0 !important;
+        min-width:0 !important;
+    }
+
+    /* ── Order Booking metric font sizes ── */
+    .metrics-row [data-testid="stMetricLabel"]{
+        font-size:11px !important;
+        white-space:normal !important;
+        word-break:break-word !important;
+    }
+    .metrics-row [data-testid="stMetricValue"]{
+        font-size:18px !important;
+        word-break:break-word !important;
+    }
+
+    /* ── Order Status & History: side-by-side columns, wrap allowed ── */
     div[data-testid="stHorizontalBlock"]{
         display:flex !important;
         flex-direction:row !important;
+        flex-wrap:wrap !important;
     }
 
     div[data-testid="stHorizontalBlock"] > div{
-        flex:1 !important;
+        flex:1 1 30% !important;
+        min-width:0 !important;
+    }
+
+    /* Metric label — black, bold, wrappable */
+    [data-testid="stMetricLabel"]{
+        font-size:11px !important;
+        font-weight:700 !important;
+        color:#000000 !important;
+        white-space:normal !important;
+        word-break:break-word !important;
+    }
+
+    /* Metric value — readable size */
+    [data-testid="stMetricValue"]{
+        font-size:18px !important;
+        font-weight:bold !important;
+        color:#000000 !important;
+        word-break:break-word !important;
     }
 
     div[role="listbox"] div[role="option"] {
@@ -235,30 +266,6 @@ div[data-baseweb="select"] input[type="text"] {
         max-width:150px !important;
         margin-left:110px !important;
         margin-right:0 !important;
-    }
-
-    /* Metrics inside .metrics-row — tighter font on mobile */
-    .metrics-row [data-testid="stMetricLabel"]{
-        font-size:11px !important;
-        white-space:normal !important;
-        word-break:break-word !important;
-    }
-
-    .metrics-row [data-testid="stMetricValue"]{
-        font-size:18px !important;
-        word-break:break-word !important;
-    }
-
-    /* Metrics inside .metrics-row-status (Order Status / History) — tighter font on mobile */
-    .metrics-row-status [data-testid="stMetricLabel"]{
-        font-size:11px !important;
-        white-space:normal !important;
-        word-break:break-word !important;
-    }
-
-    .metrics-row-status [data-testid="stMetricValue"]{
-        font-size:18px !important;
-        word-break:break-word !important;
     }
 }
 
@@ -508,6 +515,7 @@ if page == "📦 Order Booking":
 
         st.markdown("## 💰 Order Summary")
         valid_count = len([i for i in order_details if i["quantity"] > 0])
+        # Use .metrics-row wrapper so Order Booking summary stays nowrap on mobile
         st.markdown('<div class="metrics-row">', unsafe_allow_html=True)
         col1, col2 = st.columns(2)
         with col1:
@@ -596,12 +604,11 @@ elif page == "📊 Order Status":
     completed_orders = sum(1 for s in grouped_status if all(x.strip() == "Delivered" for x in s))
     pending_orders = len(grouped_status) - completed_orders
 
-    st.markdown('<div class="metrics-row-status">', unsafe_allow_html=True)
+    # No wrapper div — uses the default mobile flex-wrap:wrap so metrics sit side by side naturally
     col1, col2, col3 = st.columns(3)
     col1.metric("Pending Orders", pending_orders)
     col2.metric("Completed Orders", completed_orders)
     col3.metric("Total Orders", len(grouped_status))
-    st.markdown('</div>', unsafe_allow_html=True)
     st.markdown("---")
 
     all_shops_in_orders = sorted(df["Shop Name"].dropna().unique().tolist())
@@ -831,12 +838,11 @@ elif page == "🔍 Order History":
     total_value = filtered[total_col].apply(clean_number).sum() if total_col else 0
     unique_orders = filtered["Order ID"].nunique()
 
-    st.markdown('<div class="metrics-row-status">', unsafe_allow_html=True)
+    # No wrapper div — uses the default mobile flex-wrap:wrap so metrics sit side by side naturally
     col1, col2, col3 = st.columns(3)
     col1.metric("Matching Orders", unique_orders)
     col2.metric("Total Quintals", f"{total_qty:,.1f}")
     col3.metric("Total Value ₹", f"{total_value:,.0f}")
-    st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("---")
 
