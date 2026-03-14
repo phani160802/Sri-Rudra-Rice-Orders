@@ -693,7 +693,7 @@ elif page == "📊 Order Status":
         and original_statuses.get(str(row["Order ID"]), "").strip() != "Partial Delivery"
     ]
 
-    # For orders already at Partial Delivery, show a button to trigger the form
+    # For orders already at Partial Delivery, show via expander
     already_partial = [
         str(row["Order ID"])
         for _, row in edited_df.iterrows()
@@ -701,32 +701,45 @@ elif page == "📊 Order Status":
         and original_statuses.get(str(row["Order ID"]), "").strip() == "Partial Delivery"
     ]
 
-    if already_partial:
-        st.markdown("---")
-        st.markdown("**Record another partial delivery for:**")
-        for oid in already_partial:
-            shop_name_for = edited_df.loc[edited_df["Order ID"] == oid, "Shop"].values[0]
-            if st.button(f"🚚 Partial Delivery – Order {oid} ({shop_name_for})", key=f"btn_partial_{oid}"):
-                if "active_partial_orders" not in st.session_state:
-                    st.session_state.active_partial_orders = []
-                if oid not in st.session_state.active_partial_orders:
-                    st.session_state.active_partial_orders.append(oid)
-
-    # Combine newly changed + button-activated orders
-    if "active_partial_orders" not in st.session_state:
-        st.session_state.active_partial_orders = []
-    partial_orders = list(dict.fromkeys(newly_partial + [
-        o for o in st.session_state.active_partial_orders if o in already_partial
-    ]))
-
     delivery_updates = {}
 
-    for selected_order in partial_orders:
+    # Already-partial orders shown as expanders
+    if already_partial:
+        st.markdown("---")
+        st.markdown("#### 🚚 Record Further Partial Delivery")
+        for oid in already_partial:
+            shop_label = edited_df.loc[edited_df["Order ID"] == oid, "Shop"].values[0]
+            with st.expander(f"Order {oid} — {shop_label}", expanded=False):
+                order_rows = df[df["Order ID"].astype(str).str.strip() == oid]
+                delivery_date = st.date_input("Delivery Date", key=f"partial_delivery_date_{oid}")
+                order_updates = []
+                for i, row in order_rows.iterrows():
+                    variety = row["Variety"]
+                    total_qty = clean_number(row["Quantity (Quintal)"])
+                    delivered = clean_number(row.get("Delivered Qty", 0))
+                    pending = max(total_qty - delivered, 0)
+                    if pending <= 0:
+                        continue
+                    col1, col2, col3 = st.columns([2, 1, 1])
+                    col1.write(f"**{variety}**")
+                    col2.write(f"Pending: {pending}Q")
+                    deliver_now = col3.number_input(
+                        f"Deliver {variety}", min_value=0.0, max_value=pending, step=1.0,
+                        key=f"deliver_{oid}_{i}"
+                    )
+                    order_updates.append({
+                        "variety": variety, "deliver_now": deliver_now,
+                        "pending": pending, "delivered": delivered,
+                        "delivery_date": delivery_date
+                    })
+                delivery_updates[oid] = order_updates
+
+    # Newly changed to Partial Delivery — show inline as before
+    for selected_order in newly_partial:
         st.markdown("---")
         st.markdown(f"### 🚚 Partial Delivery – Order {selected_order}")
         order_rows = df[df["Order ID"].astype(str).str.strip() == selected_order.strip()]
         delivery_date = st.date_input("Delivery Date", key=f"partial_delivery_date_{selected_order}")
-
         order_updates = []
         for i, row in order_rows.iterrows():
             variety = row["Variety"]
@@ -808,7 +821,6 @@ elif page == "📊 Order Status":
         items_sheet.update("A1", [raw_headers] + rows_out, value_input_option="USER_ENTERED")
 
         st.success("✅ Orders updated successfully!")
-        st.session_state.active_partial_orders = []
         st.rerun()
 
 # =====================================================
