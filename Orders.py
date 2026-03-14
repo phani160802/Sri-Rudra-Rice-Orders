@@ -392,9 +392,9 @@ st.markdown(
 
     @media (max-width:768px){
         [data-testid="stImage"] img{
-            max-width: 150px !important;
-            margin-left: auto !important;
-            margin-right: auto !important;
+            max-width:150px !important;
+            margin-left:110px !important;
+            margin-right:0 !important;
         }
     }
     </style>
@@ -674,7 +674,7 @@ elif page == "📊 Order Status":
     if selected_order:
         st.markdown("---")
         st.markdown(f"### 🚚 Partial Delivery – Order {selected_order}")
-        order_rows = df[df["Order ID"] == int(selected_order)]
+        order_rows = df[df["Order ID"].astype(str).str.strip() == str(selected_order).strip()]
         delivery_date = st.date_input("Delivery Date")
 
         for i, row in order_rows.iterrows():
@@ -714,14 +714,17 @@ elif page == "📊 Order Status":
                 if update["deliver_now"] <= 0:
                     continue
                 new_delivered = update["delivered"] + update["deliver_now"]
-                new_pending = update["pending"] - update["deliver_now"]
+                new_pending = max(update["pending"] - update["deliver_now"], 0)
                 new_status = "Delivered" if new_pending <= 0 else "Partial Delivery"
                 mask = (
                     (df_sheet["Order ID"] == str(selected_order).strip()) &
-                    (df_sheet["Variety"] == update["variety"])
+                    (df_sheet["Variety"].str.strip() == str(update["variety"]).strip())
                 )
-                df_sheet.loc[mask, "Delivered Qty"] = new_delivered
-                df_sheet.loc[mask, "Pending Qty"] = max(new_pending, 0)
+                if mask.sum() == 0:
+                    st.warning(f"Could not find row for variety: {update['variety']}")
+                    continue
+                df_sheet.loc[mask, "Delivered Qty"] = str(new_delivered)
+                df_sheet.loc[mask, "Pending Qty"] = str(new_pending)
                 df_sheet.loc[mask, "Delivery Date"] = str(delivery_date)
                 df_sheet.loc[mask, "STATUS"] = new_status
 
