@@ -567,14 +567,18 @@ elif page == "📊 Order Status":
 
     col_search1, col_search2 = st.columns([2, 1])
     with col_search1:
+        # Same pattern as Order Booking — index=None + accept_new_options=True enables typing
         selected_shop = st.selectbox(
             "🏪 Filter by Shop Name",
             options=["All Shops"] + all_shops_in_orders,
             index=0,
             placeholder="Type to search shop...",
-            accept_new_options=False,
+            accept_new_options=True,
             key="status_shop_filter"
         )
+        # If user typed something not in list, treat as "All Shops"
+        if selected_shop not in (["All Shops"] + all_shops_in_orders):
+            selected_shop = "All Shops"
     with col_search2:
         search_query = st.text_input("🔍 Search by Order ID", placeholder="e.g. 42")
 
@@ -759,14 +763,18 @@ elif page == "🔍 Order History":
 
     col1, col2, col3 = st.columns(3)
     with col1:
+        # Same pattern as Order Booking — index=None + accept_new_options=True enables typing
         shop_filter = st.selectbox(
             "Filter by Shop",
             options=["All"] + sorted(df["Shop Name"].unique().tolist()),
             index=0,
             placeholder="Type to search shop...",
-            accept_new_options=False,
+            accept_new_options=True,
             key="history_shop_filter"
         )
+        # If user typed something not in list, treat as "All"
+        if shop_filter not in (["All"] + sorted(df["Shop Name"].unique().tolist())):
+            shop_filter = "All"
     with col2:
         status_filter = st.selectbox("Filter by Status", ["All"] + STATUS_OPTIONS)
     with col3:
