@@ -149,9 +149,21 @@ div[data-baseweb="select"] input[type="text"] {
         font-size:20px !important;
     }
 
+    [data-testid="stMetricValue"] > div {
+        color:#000000 !important;
+    }
+
     [data-testid="stMetricLabel"]{
         color:#000000 !important;
         font-weight:700 !important;
+    }
+
+    [data-testid="stMetricLabel"] p,
+    [data-testid="stMetricLabel"] span,
+    [data-testid="stMetricValue"] p,
+    [data-testid="stMetricValue"] span,
+    [data-testid="stMetricValue"] div {
+        color:#000000 !important;
     }
 
     div[data-testid="stFormSubmitButton"] button{
