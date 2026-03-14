@@ -684,14 +684,12 @@ elif page == "📊 Order Status":
         if new_status == "Delivered" and old_status != "Delivered":
             newly_delivered_orders.append(order_id_str)
 
-    # ── Partial Delivery Form ────────────────────────
+    # ── Partial Delivery Form ──
+    # Show for any order whose current STATUS is "Partial Delivery" (new or existing)
     selected_order = None
     for _, row in edited_df.iterrows():
-        order_id_str = str(row["Order ID"])
-        new_status = str(row["STATUS"]).strip()
-        old_status = original_statuses.get(order_id_str, "").strip()
-        if new_status == "Partial Delivery" and old_status != "Partial Delivery":
-            selected_order = order_id_str
+        if str(row["STATUS"]).strip() == "Partial Delivery":
+            selected_order = str(row["Order ID"])
             break
 
     delivery_updates = []
