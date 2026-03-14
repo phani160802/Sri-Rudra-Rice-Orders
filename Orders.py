@@ -181,39 +181,14 @@ div[data-baseweb="select"] input[type="text"] {
         color:white !important;
     }
 
-    /* ── Order Booking: keep 2-metric summary row side by side, no wrap ── */
-    .metrics-row > div[data-testid="stHorizontalBlock"] {
-        display:flex !important;
-        flex-direction:row !important;
-        flex-wrap:nowrap !important;
-        gap:6px !important;
-    }
-    .metrics-row > div[data-testid="stHorizontalBlock"] > div {
-        flex:1 1 0 !important;
-        min-width:0 !important;
-    }
-
-    /* ── Order Booking metric font sizes ── */
-    .metrics-row [data-testid="stMetricLabel"]{
-        font-size:11px !important;
-        white-space:normal !important;
-        word-break:break-word !important;
-    }
-    .metrics-row [data-testid="stMetricValue"]{
-        font-size:18px !important;
-        word-break:break-word !important;
-    }
-
-    /* ── Order Status & History: side-by-side columns, wrap allowed ── */
+    /* All horizontal blocks stay in a row on mobile */
     div[data-testid="stHorizontalBlock"]{
         display:flex !important;
         flex-direction:row !important;
-        flex-wrap:wrap !important;
     }
 
     div[data-testid="stHorizontalBlock"] > div{
-        flex:1 1 30% !important;
-        min-width:0 !important;
+        flex:1 !important;
     }
 
     /* Metric label — black, bold, wrappable */
@@ -230,6 +205,17 @@ div[data-baseweb="select"] input[type="text"] {
         font-size:18px !important;
         font-weight:bold !important;
         color:#000000 !important;
+        word-break:break-word !important;
+    }
+
+    /* ── Order Booking summary metrics: nowrap ── */
+    .metrics-row [data-testid="stMetricLabel"]{
+        font-size:11px !important;
+        white-space:normal !important;
+        word-break:break-word !important;
+    }
+    .metrics-row [data-testid="stMetricValue"]{
+        font-size:18px !important;
         word-break:break-word !important;
     }
 
