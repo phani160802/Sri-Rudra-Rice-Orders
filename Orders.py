@@ -698,15 +698,26 @@ elif page == "📊 Order Status":
     # ── Update Button ────────────────────────────────
     if st.button("💾 Update Orders", type="primary"):
         sheet_data = items_sheet.get_all_values()
-        headers = sheet_data[0]
-        df_sheet = pd.DataFrame(sheet_data[1:], columns=headers)
 
-        # Normalise Order ID column to string for safe comparison
+        # Strip all header names to avoid whitespace mismatches
+        raw_headers = sheet_data[0]
+        headers = [h.strip() for h in raw_headers]
+        rows = sheet_data[1:]
+
+        df_sheet = pd.DataFrame(rows, columns=headers)
+
+        # Normalise all string columns to strip whitespace
+        df_sheet = df_sheet.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+
+        # Normalise Order ID to string
         df_sheet["Order ID"] = df_sheet["Order ID"].astype(str).str.strip()
 
         # Apply status changes
         for _, row in edited_df.iterrows():
-            df_sheet.loc[df_sheet["Order ID"] == str(row["Order ID"]).strip(), "STATUS"] = row["STATUS"]
+            df_sheet.loc[
+                df_sheet["Order ID"] == str(row["Order ID"]).strip(),
+                "STATUS"
+            ] = row["STATUS"]
 
         # Apply partial delivery quantities
         if selected_order:
@@ -716,19 +727,27 @@ elif page == "📊 Order Status":
                 new_delivered = update["delivered"] + update["deliver_now"]
                 new_pending = max(update["pending"] - update["deliver_now"], 0)
                 new_status = "Delivered" if new_pending <= 0 else "Partial Delivery"
+
                 mask = (
                     (df_sheet["Order ID"] == str(selected_order).strip()) &
                     (df_sheet["Variety"].str.strip() == str(update["variety"]).strip())
                 )
+
                 if mask.sum() == 0:
-                    st.warning(f"Could not find row for variety: {update['variety']}")
+                    st.warning(f"⚠️ No matching row found for: Order {selected_order}, Variety '{update['variety']}'")
+                    st.info(f"Available varieties: {df_sheet[df_sheet['Order ID'] == str(selected_order).strip()]['Variety'].tolist()}")
                     continue
+
                 df_sheet.loc[mask, "Delivered Qty"] = str(new_delivered)
                 df_sheet.loc[mask, "Pending Qty"] = str(new_pending)
                 df_sheet.loc[mask, "Delivery Date"] = str(delivery_date)
                 df_sheet.loc[mask, "STATUS"] = new_status
 
-        push_sheet_update(items_sheet, df_sheet, headers)
+        # Write back using the original raw headers (sheet expects them as-is)
+        df_sheet = df_sheet.replace([float("inf"), -float("inf")], "").fillna("")
+        rows_out = [[str(v) if v != "" else "" for v in row] for row in df_sheet.values.tolist()]
+        items_sheet.update("A1", [raw_headers] + rows_out, value_input_option="USER_ENTERED")
+
         st.success("✅ Orders updated successfully!")
         st.rerun()
 
