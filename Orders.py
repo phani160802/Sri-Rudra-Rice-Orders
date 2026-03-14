@@ -124,6 +124,17 @@ div[data-baseweb="select"] input[type="text"] {
         color:#2b2b2b !important;
     }
 
+    /* Override for metric labels and values — must come after body rule */
+    body [data-testid="stMetricLabel"],
+    body [data-testid="stMetricLabel"] p,
+    body [data-testid="stMetricLabel"] span,
+    body [data-testid="stMetricValue"],
+    body [data-testid="stMetricValue"] p,
+    body [data-testid="stMetricValue"] span,
+    body [data-testid="stMetricValue"] div {
+        color:#000000 !important;
+    }
+
     .block-container{
         padding-left:12px !important;
         padding-right:12px !important;
@@ -142,33 +153,6 @@ div[data-baseweb="select"] input[type="text"] {
     img{
         max-width:150px !important;
         margin-left:120px !important;
-    }
-
-    [data-testid="stMetricValue"]{
-        color:#000000 !important;
-        font-size:20px !important;
-    }
-
-    [data-testid="stMetricValue"] > div {
-        color:#000000 !important;
-    }
-
-    [data-testid="stMetricLabel"]{
-        color:#000000 !important;
-        font-weight:700 !important;
-        visibility:visible !important;
-        opacity:1 !important;
-    }
-
-    [data-testid="stMetricLabel"] p,
-    [data-testid="stMetricLabel"] span,
-    [data-testid="stMetricLabel"] div,
-    [data-testid="stMetricValue"] p,
-    [data-testid="stMetricValue"] span,
-    [data-testid="stMetricValue"] div {
-        color:#000000 !important;
-        visibility:visible !important;
-        opacity:1 !important;
     }
 
     div[data-testid="stFormSubmitButton"] button{
