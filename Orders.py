@@ -92,9 +92,20 @@ div[data-baseweb="select"] input[type="text"] {
     color:#000000 !important;
     font-weight:700 !important;
 }
-
 [data-testid="stMetricValue"] {
     color:#000000 !important;
+}
+
+/* ── Metrics row: always side by side ── */
+.metrics-row > div[data-testid="stHorizontalBlock"] {
+    display:flex !important;
+    flex-direction:row !important;
+    flex-wrap:nowrap !important;
+    gap:6px !important;
+}
+.metrics-row > div[data-testid="stHorizontalBlock"] > div {
+    flex:1 1 0 !important;
+    min-width:0 !important;
 }
 
 /* Mobile */
@@ -134,6 +145,16 @@ div[data-baseweb="select"] input[type="text"] {
         margin-left:120px !important;
     }
 
+    [data-testid="stMetricValue"]{
+        color:#000000 !important;
+        font-size:20px !important;
+    }
+
+    [data-testid="stMetricLabel"]{
+        color:#000000 !important;
+        font-weight:700 !important;
+    }
+
     div[data-testid="stFormSubmitButton"] button{
         background-color:#8B6F2F !important;
         color:white !important;
@@ -160,33 +181,13 @@ div[data-baseweb="select"] input[type="text"] {
         color:white !important;
     }
 
-    /* Keep metric columns side by side on mobile */
     div[data-testid="stHorizontalBlock"]{
         display:flex !important;
         flex-direction:row !important;
-        flex-wrap:wrap !important;
     }
 
     div[data-testid="stHorizontalBlock"] > div{
-        flex:1 1 30% !important;
-        min-width:0 !important;
-    }
-
-    /* Metric label — black, bold, wrappable */
-    [data-testid="stMetricLabel"]{
-        font-size:11px !important;
-        font-weight:700 !important;
-        color:#000000 !important;
-        white-space:normal !important;
-        word-break:break-word !important;
-    }
-
-    /* Metric value — readable size */
-    [data-testid="stMetricValue"]{
-        font-size:18px !important;
-        font-weight:bold !important;
-        color:#000000 !important;
-        word-break:break-word !important;
+        flex:1 !important;
     }
 
     div[role="listbox"] div[role="option"] {
@@ -222,6 +223,18 @@ div[data-baseweb="select"] input[type="text"] {
         max-width:150px !important;
         margin-left:110px !important;
         margin-right:0 !important;
+    }
+
+    /* Metrics inside .metrics-row — tighter font on mobile */
+    .metrics-row [data-testid="stMetricLabel"]{
+        font-size:11px !important;
+        white-space:normal !important;
+        word-break:break-word !important;
+    }
+
+    .metrics-row [data-testid="stMetricValue"]{
+        font-size:18px !important;
+        word-break:break-word !important;
     }
 }
 
