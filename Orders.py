@@ -314,7 +314,6 @@ def push_sheet_update(items_sheet, df_sheet: pd.DataFrame, headers: list):
     """Overwrite the sheet in-place from row 1 — no appends, no duplicates."""
     df_sheet = df_sheet.replace([float("inf"), -float("inf")], "").fillna("")
     df_sheet = df_sheet[headers]
-    # Coerce all values to plain Python types so gspread doesn't choke
     rows = [[str(v) if v != "" else "" for v in row] for row in df_sheet.values.tolist()]
     items_sheet.update("A1", [headers] + rows, value_input_option="USER_ENTERED")
 
@@ -341,7 +340,7 @@ items_sheet, summary_sheet = get_sheets()
 
 @st.cache_data(ttl=60)
 def load_shops():
-    """Load shop → phone/agent lookup from the sheet."""
+    """Load shop -> phone/agent lookup from the sheet."""
     records = items_sheet.get_all_records()
     shop_phone, shop_agent = {}, {}
     for r in records:
@@ -368,28 +367,22 @@ if "last_wa_link" not in st.session_state:
 # =====================================================
 # HEADER
 # =====================================================
-
-# Logo alignment CSS (separate block, matching original)
 st.markdown(
     """
     <style>
-    /* Center the column containing the logo */
     div[data-testid="stHorizontalBlock"] > div:nth-child(2) {
         display: flex !important;
         justify-content: center !important;
     }
-
     [data-testid="stImage"] {
         display: flex !important;
         justify-content: center !important;
     }
-
     [data-testid="stImage"] img {
         display: block !important;
         margin-left: auto !important;
         margin-right: auto !important;
     }
-
     @media (max-width:768px){
         [data-testid="stImage"] img{
             max-width:150px !important;
@@ -512,7 +505,6 @@ if page == "📦 Order Booking":
     if submit_button:
         valid_items = [i for i in order_details if i["quantity"] > 0]
 
-        # Validation
         errors = []
         if not shop_name:
             errors.append("Shop Name is required.")
@@ -526,12 +518,10 @@ if page == "📦 Order Booking":
                 st.error(e)
             st.stop()
 
-        # Submit
         order_id = generate_order_id(items_sheet)
         write_order_to_sheet(items_sheet, summary_sheet, order_id, shop_name,
                              contact_number, agent_name, valid_items, grand_total)
 
-        # Invalidate shop cache so new shops appear
         load_shops.clear()
 
         st.session_state.last_order_id = order_id
@@ -540,7 +530,6 @@ if page == "📦 Order Booking":
         st.success(f"✅ Order Confirmed | Order ID : {order_id}")
         st.markdown(f"[📱 Send WhatsApp Confirmation]({st.session_state.last_wa_link})")
 
-    # Show previous success message if rerun happened
     elif st.session_state.last_order_id:
         st.success(f"✅ Last Order ID : {st.session_state.last_order_id}")
         if st.session_state.last_wa_link:
@@ -583,12 +572,16 @@ elif page == "📊 Order Status":
 
     # ── Search / Filter ──────────────────────────────
     all_shops_in_orders = sorted(df["Shop Name"].dropna().unique().tolist())
+
     col_search1, col_search2 = st.columns([2, 1])
     with col_search1:
+        # Searchable auto-fill shop selectbox (same style as Order Booking page)
         selected_shop = st.selectbox(
             "🏪 Filter by Shop Name",
             options=["All Shops"] + all_shops_in_orders,
             index=0,
+            placeholder="Type to search shop...",
+            accept_new_options=False,
             key="status_shop_filter"
         )
     with col_search2:
@@ -630,7 +623,7 @@ elif page == "📊 Order Status":
         st.success("🎉 All orders delivered!")
         st.stop()
 
-    # Apply shop dropdown filter
+    # Apply shop filter
     if selected_shop != "All Shops":
         orders_df = orders_df[orders_df["Shop"] == selected_shop]
 
@@ -658,7 +651,7 @@ elif page == "📊 Order Status":
         disabled=["Order ID", "Shop", "Agent", "Date", "Total Qty", "Varieties"]
     )
 
-    # ── Detect if any order was changed to "Delivered" ──
+    # ── Detect newly delivered orders ──
     newly_delivered_orders = []
     for _, row in edited_df.iterrows():
         order_id_str = str(row["Order ID"])
@@ -667,15 +660,7 @@ elif page == "📊 Order Status":
         if new_status == "Delivered" and old_status != "Delivered":
             newly_delivered_orders.append(order_id_str)
 
-    # ── Delivery date picker for newly delivered orders ──
-    delivered_date_input = None
-    if newly_delivered_orders:
-        st.markdown("---")
-        st.markdown(f"### 📅 Delivery Date for Fully Delivered Order(s): {', '.join(newly_delivered_orders)}")
-        delivered_date_input = st.date_input("Select Delivery Date", value=datetime.now().date(), key="delivered_date_picker")
-
     # ── Partial Delivery Form ────────────────────────
-    # Only show if user *changed* a status to Partial Delivery in this session
     selected_order = None
     for _, row in edited_df.iterrows():
         order_id_str = str(row["Order ID"])
@@ -715,17 +700,12 @@ elif page == "📊 Order Status":
     if st.button("💾 Update Orders", type="primary"):
         sheet_data = items_sheet.get_all_values()
 
-        # Strip all header names to avoid whitespace mismatches
         raw_headers = sheet_data[0]
         headers = [h.strip() for h in raw_headers]
         rows = sheet_data[1:]
 
         df_sheet = pd.DataFrame(rows, columns=headers)
-
-        # Normalise all string columns to strip whitespace
         df_sheet = df_sheet.applymap(lambda x: x.strip() if isinstance(x, str) else x)
-
-        # Normalise Order ID to string
         df_sheet["Order ID"] = df_sheet["Order ID"].astype(str).str.strip()
 
         # ── Apply status changes ──────────────────────
@@ -740,11 +720,9 @@ elif page == "📊 Order Status":
                 "STATUS"
             ] = new_status
 
-            # If status changed to Delivered, fully update qty + delivery date for all line items
+            # If changed to Delivered, auto-fill all qty fields with today's date — no prompt
             if new_status == "Delivered" and old_status != "Delivered":
-                delivery_date_str = str(
-                    delivered_date_input if delivered_date_input else datetime.now().strftime("%Y-%m-%d")
-                )
+                delivery_date_str = datetime.now().strftime("%Y-%m-%d")
                 order_mask = df_sheet["Order ID"] == order_id_str
                 for idx in df_sheet[order_mask].index:
                     total_qty = clean_number(df_sheet.at[idx, "Quantity (Quintal)"])
@@ -776,7 +754,7 @@ elif page == "📊 Order Status":
                 df_sheet.loc[mask, "Delivery Date"] = str(delivery_date)
                 df_sheet.loc[mask, "STATUS"] = new_status
 
-        # Write back using the original raw headers (sheet expects them as-is)
+        # Write back
         df_sheet = df_sheet.replace([float("inf"), -float("inf")], "").fillna("")
         rows_out = [[str(v) if v != "" else "" for v in row] for row in df_sheet.values.tolist()]
         items_sheet.update("A1", [raw_headers] + rows_out, value_input_option="USER_ENTERED")
@@ -801,7 +779,14 @@ elif page == "🔍 Order History":
     # ── Filters ──────────────────────────────────────
     col1, col2, col3 = st.columns(3)
     with col1:
-        shop_filter = st.selectbox("Filter by Shop", ["All"] + sorted(df["Shop Name"].unique().tolist()))
+        shop_filter = st.selectbox(
+            "Filter by Shop",
+            options=["All"] + sorted(df["Shop Name"].unique().tolist()),
+            index=0,
+            placeholder="Type to search shop...",
+            accept_new_options=False,
+            key="history_shop_filter"
+        )
     with col2:
         status_filter = st.selectbox("Filter by Status", ["All"] + STATUS_OPTIONS)
     with col3:
@@ -815,7 +800,7 @@ elif page == "🔍 Order History":
     if agent_filter != "All":
         filtered = filtered[filtered["Agent Name"] == agent_filter]
 
-    # ── Detect total column name (handles "Item Total", "Item Total", etc.) ──
+    # ── Detect total column name ──────────────────────
     total_col = next((c for c in filtered.columns if "total" in c.lower()), None)
 
     # ── Summary metrics ──────────────────────────────
@@ -833,7 +818,7 @@ elif page == "🔍 Order History":
     # ── Table ────────────────────────────────────────
     display_cols = ["Date", "Order ID", "Shop Name", "Agent Name", "Variety",
                     "Quantity (Quintal)", "Price (₹/Quintal)", total_col, "STATUS"]
-    display_cols = [c for c in display_cols if c]  # remove None if total_col not found
+    display_cols = [c for c in display_cols if c]
     available = [c for c in display_cols if c in filtered.columns]
     st.dataframe(filtered[available], use_container_width=True, hide_index=True)
 
