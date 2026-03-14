@@ -52,6 +52,7 @@ label, div[data-testid="stForm"] label, div[data-testid="stWidgetLabel"]{
     font-weight: bold !important;
     color:#2b2b2b !important;
 }
+
 div[data-baseweb="select"] input[type="text"] {
     color: #000000 !important;
 }
@@ -91,32 +92,9 @@ div[data-baseweb="select"] input[type="text"] {
     color:#000000 !important;
     font-weight:700 !important;
 }
+
 [data-testid="stMetricValue"] {
     color:#000000 !important;
-}
-
-/* ── .metrics-row: forces the 3 metric columns side by side always ── */
-.metrics-row > div[data-testid="stHorizontalBlock"] {
-    display: flex !important;
-    flex-direction: row !important;
-    flex-wrap: nowrap !important;
-    gap: 8px !important;
-}
-.metrics-row > div[data-testid="stHorizontalBlock"] > div {
-    flex: 1 1 0 !important;
-    min-width: 0 !important;
-}
-.metrics-row [data-testid="stMetricLabel"] {
-    font-size: 13px !important;
-    white-space: normal !important;
-    word-break: break-word !important;
-    color: #000000 !important;
-    font-weight: 700 !important;
-}
-.metrics-row [data-testid="stMetricValue"] {
-    font-size: 22px !important;
-    word-break: break-word !important;
-    color: #000000 !important;
 }
 
 /* Mobile */
@@ -126,37 +104,36 @@ div[data-baseweb="select"] input[type="text"] {
         font-size: 22px !important;
         font-weight: bold !important;
     }
+
     div[data-testid="stMarkdownContainer"] h3 {
         font-size: 22px !important;
         font-weight: bold !important;
     }
+
     body, label, span, p {
         color:#2b2b2b !important;
     }
+
     .block-container{
         padding-left:12px !important;
         padding-right:12px !important;
     }
+
     h1{
         font-size:26px !important;
         text-align:center !important;
     }
+
     h3{
         font-size:18px !important;
         text-align:center !important;
     }
+
     img{
         max-width:150px !important;
         margin-left:120px !important;
     }
-    [data-testid="stMetricValue"]{
-        color:#000000 !important;
-        font-size:20px !important;
-    }
-    [data-testid="stMetricLabel"]{
-        color:#000000 !important;
-        font-weight:700 !important;
-    }
+
     div[data-testid="stFormSubmitButton"] button{
         background-color:#8B6F2F !important;
         color:white !important;
@@ -165,9 +142,11 @@ div[data-baseweb="select"] input[type="text"] {
         width:100%;
         margin-top:8px;
     }
+
     div[data-testid="stFormSubmitButton"] button p{
         color:white !important;
     }
+
     div.stButton > button{
         background-color:#8B6F2F !important;
         color:white !important;
@@ -176,52 +155,73 @@ div[data-baseweb="select"] input[type="text"] {
         width:100%;
         margin-top:8px;
     }
+
     div.stButton > button p{
         color:white !important;
     }
+
+    /* Keep metric columns side by side on mobile */
     div[data-testid="stHorizontalBlock"]{
         display:flex !important;
         flex-direction:row !important;
+        flex-wrap:wrap !important;
     }
+
     div[data-testid="stHorizontalBlock"] > div{
-        flex:1 !important;
+        flex:1 1 30% !important;
+        min-width:0 !important;
     }
+
+    /* Metric label — black, bold, wrappable */
+    [data-testid="stMetricLabel"]{
+        font-size:11px !important;
+        font-weight:700 !important;
+        color:#000000 !important;
+        white-space:normal !important;
+        word-break:break-word !important;
+    }
+
+    /* Metric value — readable size */
+    [data-testid="stMetricValue"]{
+        font-size:18px !important;
+        font-weight:bold !important;
+        color:#000000 !important;
+        word-break:break-word !important;
+    }
+
     div[role="listbox"] div[role="option"] {
         color: #2b2b2b !important;
         font-size: 16px !important;
         font-weight: normal !important;
         background-color: white !important;
     }
+
     .stDataFrameContainer div[data-baseweb="select"] div[class*="singleValue"] {
         color: #2b2b2b !important;
         font-weight: normal !important;
         font-size: 16px !important;
     }
+
     .stDataFrameContainer div[data-baseweb="select"] div[class*="option"] {
         color: #2b2b2b !important;
         font-weight: normal !important;
         font-size: 16px !important;
     }
+
     .stDataFrameContainer div[data-baseweb="select"] div[class*="menu"] {
         color: #2b2b2b !important;
         font-size: 16px !important;
         font-weight: normal !important;
     }
+
     .brand-title{
         margin-left:0% !important;
     }
+
     [data-testid="stImage"] img{
         max-width:150px !important;
         margin-left:110px !important;
         margin-right:0 !important;
-    }
-
-    /* Metrics inside .metrics-row — smaller font on mobile */
-    .metrics-row [data-testid="stMetricLabel"] {
-        font-size: 11px !important;
-    }
-    .metrics-row [data-testid="stMetricValue"] {
-        font-size: 16px !important;
     }
 }
 
@@ -557,14 +557,10 @@ elif page == "📊 Order Status":
     completed_orders = sum(1 for s in grouped_status if all(x.strip() == "Delivered" for x in s))
     pending_orders = len(grouped_status) - completed_orders
 
-    # .metrics-row keeps these 3 metrics side by side on mobile
-    st.markdown('<div class="metrics-row">', unsafe_allow_html=True)
     col1, col2, col3 = st.columns(3)
     col1.metric("Pending Orders", pending_orders)
     col2.metric("Completed Orders", completed_orders)
     col3.metric("Total Orders", len(grouped_status))
-    st.markdown('</div>', unsafe_allow_html=True)
-
     st.markdown("---")
 
     all_shops_in_orders = sorted(df["Shop Name"].dropna().unique().tolist())
@@ -794,13 +790,10 @@ elif page == "🔍 Order History":
     total_value = filtered[total_col].apply(clean_number).sum() if total_col else 0
     unique_orders = filtered["Order ID"].nunique()
 
-    # .metrics-row keeps these 3 metrics side by side on mobile
-    st.markdown('<div class="metrics-row">', unsafe_allow_html=True)
     col1, col2, col3 = st.columns(3)
     col1.metric("Matching Orders", unique_orders)
     col2.metric("Total Quintals", f"{total_qty:,.1f}")
     col3.metric("Total Value ₹", f"{total_value:,.0f}")
-    st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("---")
 
