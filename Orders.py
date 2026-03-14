@@ -95,7 +95,7 @@ div[data-baseweb="select"] input[type="text"] {
     color:#000000 !important;
 }
 
-/* ── Metrics row: always side by side ── */
+/* ── Metrics row: always side by side, no wrap ── */
 .metrics-row > div[data-testid="stHorizontalBlock"] {
     display:flex !important;
     flex-direction:row !important;
@@ -224,16 +224,32 @@ div[data-baseweb="select"] input[type="text"] {
         margin-right:0 !important;
     }
 
-    /* Metrics inside .metrics-row — tighter font on mobile */
+    /* ── metrics-row: bigger, bolder, pure black on mobile ── */
     .metrics-row [data-testid="stMetricLabel"]{
-        font-size:11px !important;
+        font-size:13px !important;
+        font-weight:700 !important;
+        color:#000000 !important;
         white-space:normal !important;
         word-break:break-word !important;
     }
 
     .metrics-row [data-testid="stMetricValue"]{
-        font-size:18px !important;
+        font-size:24px !important;
+        font-weight:800 !important;
+        color:#000000 !important;
         word-break:break-word !important;
+    }
+
+    /* ── Remove extra blank space below metrics-row on mobile ── */
+    .metrics-row {
+        margin-bottom:0px !important;
+        padding-bottom:0px !important;
+    }
+
+    /* Collapse the empty div Streamlit injects after markdown close tags */
+    .metrics-row + div[data-testid="stVerticalBlock"] > div:empty,
+    .metrics-row + div[data-testid="stVerticalBlockBorderWrapper"] > div:empty {
+        display:none !important;
     }
 }
 
