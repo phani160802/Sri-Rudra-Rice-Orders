@@ -242,7 +242,7 @@ div[data-baseweb="select"] input[type="text"] {
 
     /* ── Remove extra blank space below metrics-row on mobile ── */
     .metrics-row {
-        margin-bottom:-2rem !important;
+        margin-bottom:0px !important;
         padding-bottom:0px !important;
     }
 }
@@ -585,9 +585,7 @@ elif page == "📊 Order Status":
     col1.metric("Pending Orders", pending_orders)
     col2.metric("Completed Orders", completed_orders)
     col3.metric("Total Orders", len(grouped_status))
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    st.markdown("---")
+    st.markdown('</div><hr style="margin-top:8px;margin-bottom:8px;border:none;border-top:1px solid #c8b56e;">', unsafe_allow_html=True)
 
     all_shops_in_orders = sorted(df["Shop Name"].dropna().unique().tolist())
 
@@ -822,9 +820,7 @@ elif page == "🔍 Order History":
     col1.metric("Matching Orders", unique_orders)
     col2.metric("Total Quintals", f"{total_qty:,.1f}")
     col3.metric("Total Value ₹", f"{total_value:,.0f}")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    st.markdown("---")
+    st.markdown('</div><hr style="margin-top:8px;margin-bottom:8px;border:none;border-top:1px solid #c8b56e;">', unsafe_allow_html=True)
 
     display_cols = ["Date", "Order ID", "Shop Name", "Agent Name", "Variety",
                     "Quantity (Quintal)", "Price (₹/Quintal)", total_col, "STATUS"]
