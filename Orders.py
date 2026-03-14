@@ -135,7 +135,11 @@ def load_shops():
     return shop_phone, shop_agent
 
 # =====================================================
-# SHARED CSS
+# SHARED CSS  —  fixes applied:
+#   1. body, label, span, p  →  dark text on mobile  (was missing)
+#   2. metric label/value overrides  →  pure black    (was missing)
+#   3. [data-testid="stImage"] img  →  restored original
+#      margin-left:110px on mobile  (was broken to auto)
 # =====================================================
 SHARED_CSS = """
 <style>
@@ -208,36 +212,106 @@ div[data-baseweb="select"] input[type="text"] { color: #000000 !important; }
 .metrics-row > div[data-testid="stHorizontalBlock"] > div {
     flex: 1 1 0 !important; min-width: 0 !important;
 }
+
+/* Desktop logo centering */
 [data-testid="stImage"] img {
-    display: block !important; margin-left: auto !important; margin-right: auto !important;
+    display: block !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
 }
+
 @media (max-width: 768px) {
     h3, h2 { font-size: 22px !important; font-weight: bold !important; }
-    .block-container { padding-left: 12px !important; padding-right: 12px !important; }
-    h1 { font-size: 26px !important; }
-    h3 { font-size: 18px !important; }
+
+    div[data-testid="stMarkdownContainer"] h3 {
+        font-size: 22px !important;
+        font-weight: bold !important;
+    }
+
+    /* FIX 1: Restore dark text for all elements on mobile */
+    body, label, span, p {
+        color: #2b2b2b !important;
+    }
+
+    /* FIX 2: Metric labels and values must stay pure black on mobile
+       (these come AFTER the body rule so they take precedence) */
+    body [data-testid="stMetricLabel"],
+    body [data-testid="stMetricLabel"] p,
+    body [data-testid="stMetricLabel"] span,
+    body [data-testid="stMetricValue"],
+    body [data-testid="stMetricValue"] p,
+    body [data-testid="stMetricValue"] span,
+    body [data-testid="stMetricValue"] div {
+        color: #000000 !important;
+    }
+
+    .block-container {
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+    }
+
+    h1 { font-size: 26px !important; text-align: center !important; }
+    h3 { font-size: 18px !important; text-align: center !important; }
+
+    /* FIX 3: Restore original logo position on mobile */
+    [data-testid="stImage"] img {
+        max-width: 150px !important;
+        margin-left: 110px !important;
+        margin-right: 0 !important;
+    }
+
     div[data-testid="stFormSubmitButton"] button,
     div.stButton > button {
-        background-color: #8B6F2F !important; color: white !important;
-        border: none !important; border-radius: 8px !important;
-        width: 100%; margin-top: 8px;
+        background-color: #8B6F2F !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 8px !important;
+        width: 100%;
+        margin-top: 8px;
     }
     div[data-testid="stFormSubmitButton"] button p,
     div.stButton > button p { color: white !important; }
+
     div[data-testid="stHorizontalBlock"] { display: flex !important; flex-direction: row !important; }
     div[data-testid="stHorizontalBlock"] > div { flex: 1 !important; }
+
     div[role="listbox"] div[role="option"] {
-        color: #2b2b2b !important; font-size: 16px !important; background-color: white !important;
+        color: #2b2b2b !important;
+        font-size: 16px !important;
+        background-color: white !important;
     }
+
+    .stDataFrameContainer div[data-baseweb="select"] div[class*="singleValue"],
+    .stDataFrameContainer div[data-baseweb="select"] div[class*="option"],
+    .stDataFrameContainer div[data-baseweb="select"] div[class*="menu"] {
+        color: #2b2b2b !important;
+        font-weight: normal !important;
+        font-size: 16px !important;
+    }
+
+    .brand-title { margin-left: 0% !important; }
+
+    /* metrics-row: bigger, bolder, pure black on mobile */
     .metrics-row [data-testid="stMetricLabel"],
     .metrics-row [data-testid="stMetricLabel"] * {
-        font-size: 14px !important; font-weight: 700 !important;
-        color: #000000 !important; white-space: normal !important; word-break: break-word !important;
+        font-size: 14px !important;
+        font-weight: 700 !important;
+        color: #000000 !important;
+        white-space: normal !important;
+        word-break: break-word !important;
     }
+
     .metrics-row [data-testid="stMetricValue"],
     .metrics-row [data-testid="stMetricValue"] * {
-        font-size: 18px !important; font-weight: 700 !important;
-        color: #000000 !important; word-break: break-word !important;
+        font-size: 18px !important;
+        font-weight: 700 !important;
+        color: #000000 !important;
+        word-break: break-word !important;
+    }
+
+    .metrics-row {
+        margin-bottom: 0px !important;
+        padding-bottom: 0px !important;
     }
 }
 </style>
@@ -653,9 +727,9 @@ elif selected == "🔐 Admin Page":
 
     df_all["Quantity (Quintal)"] = df_all["Quantity (Quintal)"].apply(clean_number)
     df_all["Delivered Qty"]      = df_all["Delivered Qty"].apply(clean_number)
-    df_all["Delivery Date"]      = pd.to_datetime(df_all["Delivery Date"], errors="coerce")
-    # ── FIX: normalize Date to date-only (no time component) to avoid month filter failures ──
-    df_all["Date"]               = pd.to_datetime(df_all["Date"], errors="coerce").dt.normalize()
+    # FIX: dayfirst=True so DD/MM/YYYY dates parse correctly
+    df_all["Delivery Date"]      = pd.to_datetime(df_all["Delivery Date"], dayfirst=True, errors="coerce")
+    df_all["Date"]               = pd.to_datetime(df_all["Date"], dayfirst=True, errors="coerce").dt.normalize()
     if "Payment Status" not in df_all.columns:
         df_all["Payment Status"] = "Pending"
     df_all["Payment Status"]     = df_all["Payment Status"].fillna("Pending").astype(str)
@@ -722,7 +796,6 @@ elif selected == "🔐 Admin Page":
             </div>"""
         all_cards_html += '</div>'
 
-        # tight height: each row of 4 cards ~170px, plus font import ~30px
         rows_of_cards = (len(variety_sales) + 3) // 4
         cards_height = rows_of_cards * 175 + 30
         html_block(all_cards_html, height=cards_height)
@@ -1035,12 +1108,9 @@ elif selected == "🔐 Admin Page":
         last_month = this_month - 1 if this_month > 1 else 12
         last_year  = this_year if this_month > 1 else this_year - 1
 
-        # ── Use year-month string (e.g. "2026-03") for robust matching
-        # regardless of how dates are stored or parsed in the sheet ──
         this_ym = f"{this_year}-{this_month:02d}"
         last_ym = f"{last_year}-{last_month:02d}"
 
-        # Build a YearMonth string column from the Date column
         df_all_valid = df_all.dropna(subset=["Date"]).copy()
         df_all_valid["YearMonth"] = df_all_valid["Date"].dt.strftime("%Y-%m")
 
