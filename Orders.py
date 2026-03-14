@@ -230,7 +230,7 @@ div[data-baseweb="select"] input[type="text"] {
     .metrics-row [data-testid="stMetricLabel"] p,
     .metrics-row [data-testid="stMetricLabel"] span,
     .metrics-row [data-testid="stMetricLabel"] div {
-        font-size:16px !important;
+        font-size:14px !important;
         font-weight:700 !important;
         color:#000000 !important;
         white-space:normal !important;
@@ -243,7 +243,7 @@ div[data-baseweb="select"] input[type="text"] {
     .metrics-row [data-testid="stMetricValue"] p,
     .metrics-row [data-testid="stMetricValue"] span,
     .metrics-row [data-testid="stMetricValue"] div {
-        font-size:20px !important;
+        font-size:18px !important;
         font-weight:700 !important;
         color:#000000 !important;
         word-break:break-word !important;
@@ -590,26 +590,13 @@ elif page == "📊 Order Status":
     completed_orders = sum(1 for s in grouped_status if all(x.strip() == "Delivered" for x in s))
     pending_orders = len(grouped_status) - completed_orders
 
-    # Pure HTML metrics — full control over size and colour on mobile
-    st.markdown(f"""
-    <div class="metrics-row">
-        <div style="display:flex;flex-direction:row;gap:6px;">
-            <div style="flex:1;background:rgba(255,255,255,0.3);border-radius:8px;padding:10px 8px;">
-                <div style="font-size:13px;font-weight:700;color:#000000;margin-bottom:4px;">Pending Orders</div>
-                <div style="font-size:16px;font-weight:800;color:#000000;">{pending_orders}</div>
-            </div>
-            <div style="flex:1;background:rgba(255,255,255,0.3);border-radius:8px;padding:10px 8px;">
-                <div style="font-size:13px;font-weight:700;color:#000000;margin-bottom:4px;">Completed Orders</div>
-                <div style="font-size:16px;font-weight:800;color:#000000;">{completed_orders}</div>
-            </div>
-            <div style="flex:1;background:rgba(255,255,255,0.3);border-radius:8px;padding:10px 8px;">
-                <div style="font-size:13px;font-weight:700;color:#000000;margin-bottom:4px;">Total Orders</div>
-                <div style="font-size:16px;font-weight:800;color:#000000;">{len(grouped_status)}</div>
-            </div>
-        </div>
-    </div>
-    <hr style="margin-top:10px;margin-bottom:8px;border:none;border-top:1px solid #c8b56e;">
-    """, unsafe_allow_html=True)
+    # metrics-row wrapper keeps these 3 columns side by side on mobile
+    st.markdown('<div class="metrics-row">', unsafe_allow_html=True)
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Pending Orders", pending_orders)
+    col2.metric("Completed Orders", completed_orders)
+    col3.metric("Total Orders", len(grouped_status))
+    st.markdown('</div><hr style="margin-top:8px;margin-bottom:8px;border:none;border-top:1px solid #c8b56e;">', unsafe_allow_html=True)
 
     all_shops_in_orders = sorted(df["Shop Name"].dropna().unique().tolist())
 
@@ -838,26 +825,13 @@ elif page == "🔍 Order History":
     total_value = filtered[total_col].apply(clean_number).sum() if total_col else 0
     unique_orders = filtered["Order ID"].nunique()
 
-    # Pure HTML metrics — full control over size and colour on mobile
-    st.markdown(f"""
-    <div class="metrics-row">
-        <div style="display:flex;flex-direction:row;gap:6px;">
-            <div style="flex:1;background:rgba(255,255,255,0.3);border-radius:8px;padding:10px 8px;">
-                <div style="font-size:13px;font-weight:700;color:#000000;margin-bottom:4px;">Matching Orders</div>
-                <div style="font-size:16px;font-weight:800;color:#000000;">{unique_orders}</div>
-            </div>
-            <div style="flex:1;background:rgba(255,255,255,0.3);border-radius:8px;padding:10px 8px;">
-                <div style="font-size:13px;font-weight:700;color:#000000;margin-bottom:4px;">Total Quintals</div>
-                <div style="font-size:16px;font-weight:800;color:#000000;">{total_qty:,.1f}</div>
-            </div>
-            <div style="flex:1;background:rgba(255,255,255,0.3);border-radius:8px;padding:10px 8px;">
-                <div style="font-size:13px;font-weight:700;color:#000000;margin-bottom:4px;">Total Value ₹</div>
-                <div style="font-size:16px;font-weight:800;color:#000000;">{total_value:,.0f}</div>
-            </div>
-        </div>
-    </div>
-    <hr style="margin-top:10px;margin-bottom:8px;border:none;border-top:1px solid #c8b56e;">
-    """, unsafe_allow_html=True)
+    # metrics-row wrapper keeps these 3 columns side by side on mobile
+    st.markdown('<div class="metrics-row">', unsafe_allow_html=True)
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Matching Orders", unique_orders)
+    col2.metric("Total Quintals", f"{total_qty:,.1f}")
+    col3.metric("Total Value ₹", f"{total_value:,.0f}")
+    st.markdown('</div><hr style="margin-top:8px;margin-bottom:8px;border:none;border-top:1px solid #c8b56e;">', unsafe_allow_html=True)
 
     display_cols = ["Date", "Order ID", "Shop Name", "Agent Name", "Variety",
                     "Quantity (Quintal)", "Price (₹/Quintal)", total_col, "STATUS"]
