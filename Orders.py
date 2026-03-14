@@ -454,7 +454,6 @@ if page == "📦 Order Booking":
 
     st.markdown("---")
 
-    # ── Live summary placeholders (rendered BEFORE the form) ──
     # ── Order Form ──────────────────────────────────
     with st.form("order_form"):
         st.markdown("### 🌾 Rice Varieties")
@@ -645,6 +644,9 @@ elif page == "📊 Order Status":
 
     st.markdown("### 📦 Update Order Status")
 
+    # ── Capture original statuses BEFORE the editor ──
+    original_statuses = {str(row["Order ID"]): str(row["STATUS"]) for _, row in orders_df.iterrows()}
+
     edited_df = st.data_editor(
         orders_df,
         use_container_width=True,
@@ -656,10 +658,24 @@ elif page == "📊 Order Status":
         disabled=["Order ID", "Shop", "Agent", "Date", "Total Qty", "Varieties"]
     )
 
+    # ── Detect if any order was changed to "Delivered" ──
+    newly_delivered_orders = []
+    for _, row in edited_df.iterrows():
+        order_id_str = str(row["Order ID"])
+        new_status = str(row["STATUS"]).strip()
+        old_status = original_statuses.get(order_id_str, "").strip()
+        if new_status == "Delivered" and old_status != "Delivered":
+            newly_delivered_orders.append(order_id_str)
+
+    # ── Delivery date picker for newly delivered orders ──
+    delivered_date_input = None
+    if newly_delivered_orders:
+        st.markdown("---")
+        st.markdown(f"### 📅 Delivery Date for Fully Delivered Order(s): {', '.join(newly_delivered_orders)}")
+        delivered_date_input = st.date_input("Select Delivery Date", value=datetime.now().date(), key="delivered_date_picker")
+
     # ── Partial Delivery Form ────────────────────────
     # Only show if user *changed* a status to Partial Delivery in this session
-    original_statuses = {str(row["Order ID"]): str(row["STATUS"]) for _, row in orders_df.iterrows()}
-
     selected_order = None
     for _, row in edited_df.iterrows():
         order_id_str = str(row["Order ID"])
@@ -675,7 +691,7 @@ elif page == "📊 Order Status":
         st.markdown("---")
         st.markdown(f"### 🚚 Partial Delivery – Order {selected_order}")
         order_rows = df[df["Order ID"].astype(str).str.strip() == str(selected_order).strip()]
-        delivery_date = st.date_input("Delivery Date")
+        delivery_date = st.date_input("Delivery Date", key="partial_delivery_date")
 
         for i, row in order_rows.iterrows():
             variety = row["Variety"]
@@ -712,14 +728,31 @@ elif page == "📊 Order Status":
         # Normalise Order ID to string
         df_sheet["Order ID"] = df_sheet["Order ID"].astype(str).str.strip()
 
-        # Apply status changes
+        # ── Apply status changes ──────────────────────
         for _, row in edited_df.iterrows():
-            df_sheet.loc[
-                df_sheet["Order ID"] == str(row["Order ID"]).strip(),
-                "STATUS"
-            ] = row["STATUS"]
+            order_id_str = str(row["Order ID"]).strip()
+            new_status = str(row["STATUS"]).strip()
+            old_status = original_statuses.get(order_id_str, "").strip()
 
-        # Apply partial delivery quantities
+            # Always update STATUS column
+            df_sheet.loc[
+                df_sheet["Order ID"] == order_id_str,
+                "STATUS"
+            ] = new_status
+
+            # If status changed to Delivered, fully update qty + delivery date for all line items
+            if new_status == "Delivered" and old_status != "Delivered":
+                delivery_date_str = str(
+                    delivered_date_input if delivered_date_input else datetime.now().strftime("%Y-%m-%d")
+                )
+                order_mask = df_sheet["Order ID"] == order_id_str
+                for idx in df_sheet[order_mask].index:
+                    total_qty = clean_number(df_sheet.at[idx, "Quantity (Quintal)"])
+                    df_sheet.at[idx, "Delivered Qty"] = str(total_qty)
+                    df_sheet.at[idx, "Pending Qty"] = "0"
+                    df_sheet.at[idx, "Delivery Date"] = delivery_date_str
+
+        # ── Apply partial delivery quantities ─────────
         if selected_order:
             for update in delivery_updates:
                 if update["deliver_now"] <= 0:
