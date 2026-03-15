@@ -58,6 +58,26 @@ def clean_number(value) -> float:
         return 0.0
     return float(str(value).replace("₹", "").replace(",", "").strip())
 
+def format_inr(value: float) -> str:
+    """Format number in Indian numbering system: 12,34,567"""
+    value = int(round(value))
+    s = str(abs(value))
+    if len(s) <= 3:
+        result = s
+    else:
+        last3 = s[-3:]
+        rest = s[:-3]
+        parts = []
+        while len(rest) > 2:
+            parts.append(rest[-2:])
+            rest = rest[:-2]
+        if rest:
+            parts.append(rest)
+        result = last3
+        for p in parts:
+            result = p + "," + result
+    return ("-" if value < 0 else "") + result
+
 def generate_order_id(sheet) -> str:
     try:
         values = sheet.col_values(2)[1:]
@@ -73,8 +93,8 @@ def build_whatsapp_link(contact: str, shop: str, items: list, grand_total: float
     lines = [f"Hi {shop} 👋", "Order Confirmed ✅", "Order Details:"]
     for item in items:
         total = item["quantity"] * item["price"]
-        lines.append(f"{item['variety']} : {item['quantity']} QTL x ₹{item['price']} = ₹{total:,.0f}")
-    lines.append(f"Grand Total : ₹{grand_total:,.0f}")
+        lines.append(f"{item['variety']} : {item['quantity']} QTL x ₹{item['price']} = ₹{format_inr(total)}")
+    lines.append(f"Grand Total : ₹{format_inr(grand_total)}")
     lines.append("Thank you, Sri Rudra Rice 🌾")
     return f"https://wa.me/{phone}?text={urllib.parse.quote(chr(10).join(lines))}"
 
@@ -385,7 +405,7 @@ if selected == "📦 Orders Page":
                     grand_total += item_total
                     order_details.append({"variety": variety, "quantity": quantity, "price": price, "total": item_total})
                     if quantity > 0:
-                        st.caption(f"Item Total: ₹ {item_total:,.2f}")
+                        st.caption(f"Item Total: ₹ {format_inr(item_total)}")
                     st.markdown("</div>", unsafe_allow_html=True)
 
             st.markdown("## 💰 Order Summary")
@@ -394,7 +414,7 @@ if selected == "📦 Orders Page":
             with col1:
                 st.metric("Total Items", valid_count)
             with col2:
-                st.metric("Grand Total ₹", f"{grand_total:,.2f}")
+                st.metric("Grand Total ₹", f"{format_inr(grand_total)}")
             st.markdown("---")
             col_a, col_b, col_c = st.columns([1, 1, 1])
             with col_a:
@@ -660,7 +680,7 @@ if selected == "📦 Orders Page":
         col1, col2, col3 = st.columns(3)
         col1.metric("Matching Orders", unique_orders)
         col2.metric("Total Quintals", f"{total_qty:,.1f}")
-        col3.metric("Total Value ₹", f"{total_value:,.0f}")
+        col3.metric("Total Value ₹", f"{format_inr(total_value)}")
         st.markdown('</div><hr style="margin-top:8px;margin-bottom:8px;border:none;border-top:1px solid #c8b56e;">', unsafe_allow_html=True)
 
         display_cols = ["Date", "Order ID", "Shop Name", "Agent Name", "Variety",
@@ -751,9 +771,9 @@ elif selected == "🔐 Admin Page":
     c1, c2, c3, c4, c5 = st.columns(5)
     c1.metric("Total Orders",    total_orders)
     c2.metric("Total Quintals",  f"{total_quintals:,.1f}")
-    c3.metric("Total Revenue ₹", f"{total_revenue:,.0f}")
-    c4.metric("Collected ₹",     f"{collected_rev:,.0f}")
-    c5.metric("Pending ₹",       f"{pending_rev:,.0f}")
+    c3.metric("Total Revenue ₹", f"{format_inr(total_revenue)}")
+    c4.metric("Collected ₹",     f"{format_inr(collected_rev)}")
+    c5.metric("Pending ₹",       f"{format_inr(pending_rev)}")
     st.markdown("---")
 
     tab_sales, tab_payments, tab_employee = st.tabs(["📈 Sales", "💳 Payments", "👤 Employee Performance"])
@@ -789,7 +809,7 @@ elif selected == "🔐 Admin Page":
                 <div style="font-size:12px;color:#666;margin-top:6px;">Quintals Sold</div>
                 <div style="font-size:22px;font-weight:700;color:#2b2b2b;">{row['Total_Quintals']:,.1f} Q</div>
                 <div style="font-size:12px;color:#666;margin-top:4px;">Revenue</div>
-                <div style="font-size:17px;font-weight:600;color:#4A7C59;">&#8377;{row['Total_Revenue']:,.0f}</div>
+                <div style="font-size:17px;font-weight:600;color:#4A7C59;">&#8377;{format_inr(row['Total_Revenue'])}</div>
                 <div style="background:#f0e8d0;border-radius:6px;height:8px;margin-top:10px;">
                     <div style="background:{border_color};width:{bar_pct}%;height:8px;border-radius:6px;"></div>
                 </div>
@@ -827,7 +847,7 @@ elif selected == "🔐 Admin Page":
                 bars_html += f"""
                 <div style="display:flex; flex-direction:column; align-items:center; flex:1; min-width:50px;">
                     <div style="font-size:11px; color:#4A7C59; font-weight:600; margin-bottom:4px;">
-                        &#8377;{tr['Revenue']/1000:.0f}K
+                        &#8377;{format_inr(tr['Revenue'])}
                     </div>
                     <div style="background:#8B6F2F; width:70%; height:{h}px; border-radius:6px 6px 0 0;"></div>
                     <div style="font-size:10px; color:#888; margin-top:4px; text-align:center;
@@ -855,26 +875,24 @@ elif selected == "🔐 Admin Page":
                  Quintals=("Quantity (Quintal)", "sum"))
             .sort_values("Revenue", ascending=False).head(5).reset_index()
         )
-        top_revenue_html = ""
         for rank, row in shop_rev.iterrows():
             bar_pct = int((row["Revenue"] / shop_rev["Revenue"].max()) * 100)
             medal = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣"][rank]
-            top_revenue_html += f"""
+            st.markdown(f"""
             <div style="background:white; border-radius:10px; padding:14px 18px; margin-bottom:8px;
                         box-shadow:0 2px 8px rgba(0,0,0,0.06); display:flex; align-items:center; gap:16px;">
                 <div style="font-size:28px;">{medal}</div>
                 <div style="flex:1;">
-                    <div style="font-weight:700; font-size:16px; color:#2b2b2b;">{row['Shop Name']}</div>
+                    <div style="font-weight:700; font-size:16px; color:#2b2b2b;">{row["Shop Name"]}</div>
                     <div style="background:#f0e8d0; border-radius:4px; height:6px; margin-top:6px;">
                         <div style="background:#8B6F2F; width:{bar_pct}%; height:6px; border-radius:4px;"></div>
                     </div>
                 </div>
                 <div style="text-align:right; min-width:120px;">
-                    <div style="font-size:17px; font-weight:700; color:#4A7C59;">&#8377;{row['Revenue']:,.0f}</div>
-                    <div style="font-size:12px; color:#888;">{row['Orders']} orders · {row['Quintals']:,.1f} Q</div>
+                    <div style="font-size:17px; font-weight:700; color:#4A7C59;">&#8377;{format_inr(row["Revenue"])}</div>
+                    <div style="font-size:12px; color:#888;">{row["Orders"]} orders · {row["Quintals"]:,.1f} Q</div>
                 </div>
-            </div>"""
-        html_block(top_revenue_html, height=card_list_height(len(shop_rev), item_px=82))
+            </div>""", unsafe_allow_html=True)
 
         st.markdown("---")
 
@@ -887,26 +905,24 @@ elif selected == "🔐 Admin Page":
                  Quintals=("Quantity (Quintal)", "sum"))
             .sort_values("Orders", ascending=False).head(5).reset_index()
         )
-        repeat_html = ""
         for rank, row in shop_repeat.iterrows():
             bar_pct = int((row["Orders"] / shop_repeat["Orders"].max()) * 100)
             medal = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣"][rank]
-            repeat_html += f"""
+            st.markdown(f"""
             <div style="background:white; border-radius:10px; padding:14px 18px; margin-bottom:8px;
                         box-shadow:0 2px 8px rgba(0,0,0,0.06); display:flex; align-items:center; gap:16px;">
                 <div style="font-size:28px;">{medal}</div>
                 <div style="flex:1;">
-                    <div style="font-weight:700; font-size:16px; color:#2b2b2b;">{row['Shop Name']}</div>
+                    <div style="font-weight:700; font-size:16px; color:#2b2b2b;">{row["Shop Name"]}</div>
                     <div style="background:#f0e8d0; border-radius:4px; height:6px; margin-top:6px;">
                         <div style="background:#C08030; width:{bar_pct}%; height:6px; border-radius:4px;"></div>
                     </div>
                 </div>
                 <div style="text-align:right; min-width:120px;">
-                    <div style="font-size:17px; font-weight:700; color:#C08030;">{row['Orders']} orders</div>
-                    <div style="font-size:12px; color:#888;">&#8377;{row['Revenue']:,.0f} · {row['Quintals']:,.1f} Q</div>
+                    <div style="font-size:17px; font-weight:700; color:#C08030;">{row["Orders"]} orders</div>
+                    <div style="font-size:12px; color:#888;">&#8377;{format_inr(row["Revenue"])} · {row["Quintals"]:,.1f} Q</div>
                 </div>
-            </div>"""
-        html_block(repeat_html, height=card_list_height(len(shop_repeat), item_px=82))
+            </div>""", unsafe_allow_html=True)
 
     # ══════════════════════════════
     # TAB 2 — PAYMENTS
@@ -948,33 +964,84 @@ elif selected == "🔐 Admin Page":
                 selected_order_id = order_options[selected_label]
                 order_rows = df_pay_eligible[
                     df_pay_eligible["Order ID"].astype(str) == selected_order_id
-                ]
+                ].copy()
 
-                st.markdown(f"**Order {selected_order_id} — {order_rows['Shop Name'].iloc[0]}**")
-                st.caption(f"Agent: {order_rows['Agent Name'].iloc[0]}")
-                st.markdown("")
+                shop_name_disp = order_rows["Shop Name"].iloc[0]
+                agent_disp     = order_rows["Agent Name"].iloc[0]
+                is_partial     = order_rows["STATUS"].str.strip().eq("Partial Delivery").any()
 
-                updated_statuses = {}
-                for _, row in order_rows.iterrows():
-                    with st.container():
-                        st.markdown(f"""
-                        <div style="background:#fffdf3; border:1px solid #e0c96e; border-radius:10px;
-                                    padding:10px 14px; margin-bottom:4px;">
-                            <div style="font-weight:700; font-size:15px; color:#2b2b2b;">{row['Variety']}</div>
-                            <div style="font-size:13px; color:#666; margin-top:2px;">
-                                {row['Delivered Qty']} Q &nbsp;&middot;&nbsp; &#8377;{row['Price (&#8377;/Quintal)']}/Q
-                            </div>
-                        </div>
-                        """, unsafe_allow_html=True)
-                        current = str(row["Payment Status"]).strip()
-                        new_status = st.selectbox(
-                            "Payment Status",
-                            options=["Pending", "Received"],
-                            index=0 if current.lower() != "received" else 1,
-                            key=f"pay_status_{selected_order_id}_{row['Variety']}",
-                            label_visibility="collapsed"
-                        )
-                        updated_statuses[row["Variety"]] = new_status
+                # ── Safely detect price column (handles encoding variants) ──
+                price_col = next(
+                    (c for c in order_rows.columns if "price" in c.lower() and "quintal" in c.lower()),
+                    "Price (₹/Quintal)"
+                )
+
+                # ── Compute totals ──
+                order_rows["_delivered"] = order_rows["Delivered Qty"].apply(clean_number)
+                order_rows["_price"]     = order_rows[price_col].apply(clean_number)
+                order_rows["_ordered"]   = order_rows["Quantity (Quintal)"].apply(clean_number)
+                order_rows["_del_val"]   = order_rows["_delivered"] * order_rows["_price"]
+                order_rows["_ord_val"]   = order_rows["_ordered"]  * order_rows["_price"]
+
+                total_delivered_val = order_rows["_del_val"].sum()
+                total_ordered_val   = order_rows["_ord_val"].sum()
+                total_delivered_qty = order_rows["_delivered"].sum()
+                total_ordered_qty   = order_rows["_ordered"].sum()
+
+                # Current overall payment status (use first row as representative)
+                current_pay = str(order_rows["Payment Status"].iloc[0]).strip().lower()
+                current_idx = 1 if current_pay == "received" else 0
+
+                # ── Order summary card ──
+                partial_note = ""
+                if is_partial:
+                    pending_qty = total_ordered_qty - total_delivered_qty
+                    partial_note = f'<div style="margin-top:6px; font-size:12px; color:#f39c12; font-weight:600;">⚠️ Partial delivery — {total_delivered_qty:g}Q of {total_ordered_qty:g}Q delivered. {pending_qty:g}Q still pending.</div>'
+
+                variety_rows_html = ""
+                for _, vrow in order_rows.iterrows():
+                    d_qty = clean_number(vrow["Delivered Qty"])
+                    if d_qty <= 0:
+                        continue
+                    price_val  = clean_number(vrow[price_col])
+                    d_val      = d_qty * price_val
+                    # pre-format all numbers to avoid f-string CSS brace conflicts
+                    d_qty_fmt  = f"{d_qty:g}"
+                    price_fmt  = f"{format_inr(price_val)}"
+                    d_val_fmt  = f"{format_inr(d_val)}"
+                    variety_rows_html += f"""
+                    <div style="display:flex; justify-content:space-between; padding:4px 0;
+                                border-bottom:1px solid #f0e8d0; font-size:13px; color:#555;">
+                        <span>{vrow["Variety"]}</span>
+                        <span>{d_qty_fmt} Q &times; &#8377;{price_fmt} = <b style="color:#2b2b2b;">&#8377;{d_val_fmt}</b></span>
+                    </div>"""
+
+                # pre-format total to avoid f-string CSS brace conflicts
+                total_del_fmt = f"{format_inr(total_delivered_val)}"
+                st.markdown(f"""
+                <div style="background:white; border-radius:12px; padding:16px 18px; margin-bottom:12px;
+                            box-shadow:0 2px 10px rgba(0,0,0,0.07); border-left:4px solid #8B6F2F;">
+                    <div style="font-weight:700; font-size:16px; color:#2b2b2b;">
+                        Order {selected_order_id} &nbsp;&middot;&nbsp;
+                        <span style="color:#8B6F2F;">{shop_name_disp}</span>
+                    </div>
+                    <div style="font-size:12px; color:#888; margin-top:2px;">Agent: {agent_disp}</div>
+                    <div style="margin-top:10px;">{variety_rows_html}</div>
+                    <div style="display:flex; justify-content:space-between; margin-top:10px;
+                                font-size:14px; font-weight:700; color:#4A7C59;">
+                        <span>&#128176; Amount for delivered qty:</span>
+                        <span>&#8377;{total_del_fmt}</span>
+                    </div>
+                    {partial_note}
+                </div>""", unsafe_allow_html=True)
+
+                # ── Single payment status selector for whole order ──
+                new_pay_status = st.selectbox(
+                    "💳 Payment received for delivered qty?",
+                    options=["Pending", "Received"],
+                    index=current_idx,
+                    key=f"pay_status_order_{selected_order_id}"
+                )
 
                 st.markdown("")
                 if st.button("💾 Save Payment Status", type="primary", key="save_payment_btn"):
@@ -985,17 +1052,14 @@ elif selected == "🔐 Admin Page":
                     df_write         = df_write.applymap(lambda x: x.strip() if isinstance(x, str) else x)
                     if "Payment Status" not in df_write.columns:
                         df_write["Payment Status"] = "Pending"
-                    for variety, status in updated_statuses.items():
-                        mask = (
-                            (df_write["Order ID"].astype(str).str.strip() == selected_order_id) &
-                            (df_write["Variety"].str.strip() == variety)
-                        )
-                        df_write.loc[mask, "Payment Status"] = status
+                    # Apply same status to ALL rows of this order that have delivered qty > 0
+                    order_mask = df_write["Order ID"].astype(str).str.strip() == selected_order_id
+                    df_write.loc[order_mask, "Payment Status"] = new_pay_status
                     df_write = df_write.replace([float("inf"), -float("inf")], "").fillna("")
                     rows_out = [[str(v) if v != "" else "" for v in r] for r in df_write.values.tolist()]
                     items_sheet.update("A1", [raw_hdrs] + rows_out, value_input_option="USER_ENTERED")
                     load_admin_data.clear()
-                    st.success(f"✅ Payment status updated for Order {selected_order_id}!")
+                    st.success(f"✅ Payment marked as {new_pay_status} for Order {selected_order_id}!")
                     st.rerun()
 
         st.markdown("---")
@@ -1022,10 +1086,10 @@ elif selected == "🔐 Admin Page":
 
             if shop_outstanding:
                 max_out = max(shop_outstanding.values())
-                outstanding_html = ""
                 for shop_name, amount in sorted(shop_outstanding.items(), key=lambda x: -x[1]):
                     bar_pct = int((amount / max_out) * 100)
-                    outstanding_html += f"""
+                    amount_fmt = f"{format_inr(amount)}"
+                    st.markdown(f"""
                     <div style="background:white; border-radius:10px; padding:12px 16px; margin-bottom:8px;
                                 box-shadow:0 2px 6px rgba(0,0,0,0.06); display:flex; align-items:center; gap:14px;">
                         <div style="font-size:20px;">🏪</div>
@@ -1036,10 +1100,9 @@ elif selected == "🔐 Admin Page":
                             </div>
                         </div>
                         <div style="font-size:16px; font-weight:700; color:#e74c3c; min-width:110px; text-align:right;">
-                            &#8377;{amount:,.0f}
+                            &#8377;{amount_fmt}
                         </div>
-                    </div>"""
-                html_block(outstanding_html, height=card_list_height(len(shop_outstanding), item_px=72))
+                    </div>""", unsafe_allow_html=True)
             else:
                 st.success("🎉 No outstanding amounts!")
 
@@ -1076,31 +1139,33 @@ elif selected == "🔐 Admin Page":
                 st.success("🎉 All payments received!")
             else:
                 due_rows_sorted = sorted(shop_due.values(), key=lambda x: -x["unpaid"])
-                due_tracker_html = ""
                 for r in due_rows_sorted:
                     if r["days"] > 15:
-                        bg, border, badge = "#fff5f5", "#e74c3c", f'<span style="background:#e74c3c; color:white; border-radius:4px; padding:2px 8px; font-size:11px;">🔴 Overdue {r["days"]}d</span>'
+                        bg, border, badge_text = "#fff5f5", "#e74c3c", f"🔴 Overdue {r['days']}d"
+                        badge_bg = "#e74c3c"
                     elif r["days"] > 7:
-                        bg, border, badge = "#fffbf0", "#f39c12", f'<span style="background:#f39c12; color:white; border-radius:4px; padding:2px 8px; font-size:11px;">🟡 Due {r["days"]}d</span>'
+                        bg, border, badge_text = "#fffbf0", "#f39c12", f"🟡 Due {r['days']}d"
+                        badge_bg = "#f39c12"
                     else:
-                        bg, border, badge = "#f9f9f9", "#95a5a6", f'<span style="background:#95a5a6; color:white; border-radius:4px; padding:2px 8px; font-size:11px;">🟢 {r["days"]}d</span>'
-                    due_tracker_html += f"""
+                        bg, border, badge_text = "#f9f9f9", "#95a5a6", f"🟢 {r['days']}d"
+                        badge_bg = "#95a5a6"
+                    unpaid_fmt = format_inr(r['unpaid'])
+                    st.markdown(f"""
                     <div style="background:{bg}; border-left:4px solid {border}; border-radius:8px;
                                 padding:12px 16px; margin-bottom:10px; box-shadow:0 1px 4px rgba(0,0,0,0.05);">
                         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
                             <div>
-                                <span style="font-weight:700; font-size:16px; color:#2b2b2b;">🏪 {r['shop']}</span>
-                                &nbsp;·&nbsp;<span style="color:#888; font-size:13px;">{r['agent']}</span>
+                                <span style="font-weight:700; font-size:16px; color:#2b2b2b;">🏪 {r["shop"]}</span>
+                                &nbsp;·&nbsp;<span style="color:#888; font-size:13px;">{r["agent"]}</span>
                             </div>
-                            {badge}
+                            <span style="background:{badge_bg}; color:white; border-radius:4px; padding:2px 8px; font-size:11px;">{badge_text}</span>
                         </div>
                         <div style="display:flex; flex-wrap:wrap; gap:16px; margin-top:8px; font-size:13px; color:#666;">
-                            <span>📦 {r['pending_orders']} pending order(s)</span>
-                            <span>📅 Last delivery: {r['latest_date']}</span>
-                            <span style="font-weight:700; color:#e74c3c; font-size:15px;">💸 Unpaid: &#8377;{r['unpaid']:,.0f}</span>
+                            <span>📦 {r["pending_orders"]} pending order(s)</span>
+                            <span>📅 Last delivery: {r["latest_date"]}</span>
+                            <span style="font-weight:700; color:#e74c3c; font-size:15px;">💸 Unpaid: &#8377;{unpaid_fmt}</span>
                         </div>
-                    </div>"""
-                html_block(due_tracker_html, height=card_list_height(len(due_rows_sorted), item_px=100) + 40, scrolling=True)
+                    </div>""", unsafe_allow_html=True)
 
     # ══════════════════════════════
     # TAB 3 — EMPLOYEE PERFORMANCE
@@ -1165,8 +1230,8 @@ elif selected == "🔐 Admin Page":
             order_arrow = (f'<span style="color:#27ae60;">▲ {order_diff}</span>'      if order_diff > 0 else
                            f'<span style="color:#e74c3c;">▼ {abs(order_diff)}</span>' if order_diff < 0 else
                            '<span style="color:#888;">━ 0</span>')
-            rev_arrow   = (f'<span style="color:#27ae60;">▲ &#8377;{rev_diff:,.0f}</span>'      if rev_diff > 0 else
-                           f'<span style="color:#e74c3c;">▼ &#8377;{abs(rev_diff):,.0f}</span>' if rev_diff < 0 else
+            rev_arrow   = (f'<span style="color:#27ae60;">▲ &#8377;{format_inr(rev_diff)}</span>'      if rev_diff > 0 else
+                           f'<span style="color:#e74c3c;">▼ &#8377;{format_inr(abs(rev_diff))}</span>' if rev_diff < 0 else
                            '<span style="color:#888;">━ &#8377;0</span>')
 
             agent_perf_html += f"""
@@ -1184,7 +1249,7 @@ elif selected == "🔐 Admin Page":
                         </div>
                     </div>
                     <div style="text-align:right; min-width:120px;">
-                        <div style="font-size:18px; font-weight:700; color:#4A7C59;">&#8377;{row['Revenue']:,.0f}</div>
+                        <div style="font-size:18px; font-weight:700; color:#4A7C59;">&#8377;{format_inr(row['Revenue'])}</div>
                         <div style="font-size:12px; color:#888;">All time revenue</div>
                     </div>
                 </div>
@@ -1196,13 +1261,13 @@ elif selected == "🔐 Admin Page":
                     </div>
                     <div style="flex:1; text-align:center;">
                         <div style="font-size:11px; color:#888;">{this_month_label} Revenue</div>
-                        <div style="font-size:15px; font-weight:700; color:#2b2b2b;">&#8377;{tm_rev:,.0f}</div>
+                        <div style="font-size:15px; font-weight:700; color:#2b2b2b;">&#8377;{format_inr(tm_rev)}</div>
                         <div style="font-size:11px;">{rev_arrow} vs {last_month_label}</div>
                     </div>
                 </div>
             </div>"""
 
-        html_block(agent_perf_html, height=len(agent_perf) * 158 + 10, scrolling=True)
+        html_block(agent_perf_html, height=min(len(agent_perf) * 158 + 10, 600), scrolling=True)
 
     st.markdown("---")
     st.download_button(label="⬇️ Download Full Data as CSV",
