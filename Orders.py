@@ -1074,7 +1074,7 @@ elif selected == "🔐 Admin Page":
 
                     table_html = f"""
                     <div style="border-radius:10px; overflow-x:auto; border:0.5px solid #e0d8c8; margin-bottom:4px; -webkit-overflow-scrolling:touch;">
-                        <table style="min-width:520px; width:100%; border-collapse:collapse; font-family:sans-serif;">
+                        <table style="min-width:420px; width:100%; border-collapse:collapse; font-family:sans-serif;">
                             <thead>
                                 <tr style="background:#f5edd6; border-bottom:1px solid #e0d8c8;">
                                     <th style="padding:9px 12px; font-size:12px; font-weight:700; color:#4A3510; text-align:left;">Order</th>
@@ -1250,7 +1250,6 @@ elif selected == "🔐 Admin Page":
                             <div style="font-size:14px; font-weight:700; color:#1a1a1a;">{r["shop"]}</div>
                             <div style="font-size:12px; font-weight:600; color:#555; margin-top:2px;">{r["agent"]}</div>
                         </td>
-                        <td style="padding:10px 14px; font-size:14px; font-weight:600; color:#1a1a1a; text-align:center;">{r["pending_orders"]}</td>
                         <td style="padding:10px 14px; font-size:13px; font-weight:600; color:#333; text-align:center;">{r["latest_date"]}</td>
                         <td style="padding:10px 14px; text-align:center;">
                             <span style="background:{badge_bg}; color:{badge_color}; font-size:12px; font-weight:700;
@@ -1263,11 +1262,10 @@ elif selected == "🔐 Admin Page":
 
                 table_html = f"""
                 <div style="border-radius:10px; overflow-x:auto; border:0.5px solid #e0d8c8; margin-top:4px; -webkit-overflow-scrolling:touch;">
-                    <table style="min-width:520px; width:100%; border-collapse:collapse; font-family:sans-serif;">
+                    <table style="min-width:420px; width:100%; border-collapse:collapse; font-family:sans-serif;">
                         <thead>
                             <tr style="background:#f5edd6; border-bottom:1px solid #e0d8c8;">
                                 <th style="padding:10px 14px; font-size:13px; font-weight:700; color:#4A3510; text-align:left;">Shop</th>
-                                <th style="padding:10px 14px; font-size:13px; font-weight:700; color:#4A3510; text-align:center;">Orders</th>
                                 <th style="padding:10px 14px; font-size:13px; font-weight:700; color:#4A3510; text-align:center;">Last Delivery</th>
                                 <th style="padding:10px 14px; font-size:13px; font-weight:700; color:#4A3510; text-align:center;">Status</th>
                                 <th style="padding:10px 14px; font-size:13px; font-weight:700; color:#4A3510; text-align:right;">Unpaid Amount</th>
@@ -1278,7 +1276,7 @@ elif selected == "🔐 Admin Page":
                         </tbody>
                         <tfoot>
                             <tr style="background:#f5edd6; border-top:1.5px solid #c8b56e;">
-                                <td colspan="4" style="padding:10px 14px; font-size:14px; font-weight:700; color:#4A3510;">
+                                <td colspan="3" style="padding:10px 14px; font-size:14px; font-weight:700; color:#4A3510;">
                                     Total Outstanding
                                 </td>
                                 <td style="padding:10px 14px; font-size:16px; font-weight:700; color:#8B1A1A; text-align:right;">
