@@ -23,7 +23,19 @@ FONT_STYLE = """
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600;700&display=swap');
   * { font-family: 'Source Sans Pro', sans-serif; box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: transparent; overflow: hidden; }
+  body { background: transparent; overflow-x: auto; overflow-y: hidden; }
+</style>
+"""
+
+FONT_STYLE_SCROLL = """
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600;700&display=swap');
+  * { font-family: 'Source Sans Pro', sans-serif; box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: transparent; overflow-x: auto; overflow-y: auto; }
+  ::-webkit-scrollbar { height: 6px; width: 6px; }
+  ::-webkit-scrollbar-track { background: #f0e8d0; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb { background: #c8b56e; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #8B6F2F; }
 </style>
 """
 
@@ -1098,7 +1110,7 @@ elif selected == "🔐 Admin Page":
                         </table>
                     </div>"""
                     tbl_height = len(order_summary) * 46 + 90
-                    components.html(FONT_STYLE + table_html, height=tbl_height, scrolling=True)
+                    components.html(FONT_STYLE_SCROLL + table_html, height=tbl_height + 16, scrolling=True)
 
                     st.markdown("")
                     st.markdown("##### 💰 Enter Payment Received")
@@ -1287,7 +1299,7 @@ elif selected == "🔐 Admin Page":
                     </table>
                 </div>"""
                 table_height = len(due_rows_sorted) * 56 + 90
-                components.html(FONT_STYLE + table_html, height=table_height, scrolling=True)
+                components.html(FONT_STYLE_SCROLL + table_html, height=table_height + 16, scrolling=True)
 
     # ══════════════════════════════
     # TAB 3 — EMPLOYEE PERFORMANCE
