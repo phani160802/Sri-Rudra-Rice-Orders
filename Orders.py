@@ -1175,7 +1175,7 @@ elif selected == "🔐 Admin Page":
 
         # ── Outstanding by Shop ──
         st.markdown("#### ⏰ Payment Due Tracker")
-        st.caption("Shops with outstanding payments — sorted by unpaid amount. Colour coded by days since last delivery.")
+        #st.caption("Shops with outstanding payments — sorted by unpaid amount. Colour coded by days since last delivery.")
         today = pd.Timestamp(datetime.now().date())
         # Include ALL delivered/partial rows — even those missing a delivery date
         due_eligible = df_all[
@@ -1408,3 +1408,4 @@ elif selected == "🔐 Admin Page":
                         data=df_all.to_csv(index=False).encode("utf-8"),
                         file_name=f"full_data_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
                         mime="text/csv")
+
