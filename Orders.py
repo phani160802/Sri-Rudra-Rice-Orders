@@ -929,7 +929,7 @@ elif selected == "🔐 Admin Page":
     # ══════════════════════════════
     with tab_payments:
 
-        st.markdown("#### 💳 Update Payment Status")
+        st.markdown("#### 💳 Record Payment from Shop")
 
         sheet_data_pay  = items_sheet.get_all_values()
         raw_headers_pay = sheet_data_pay[0]
@@ -938,234 +938,334 @@ elif selected == "🔐 Admin Page":
         df_pay          = df_pay.applymap(lambda x: x.strip() if isinstance(x, str) else x)
         if "Payment Status" not in df_pay.columns:
             df_pay["Payment Status"] = "Pending"
+        if "Amount Received" not in df_pay.columns:
+            df_pay["Amount Received"] = "0"
+
+        # safely detect price col
+        price_col_pay = next(
+            (c for c in df_pay.columns if "price" in c.lower() and "quintal" in c.lower()),
+            "Price (₹/Quintal)"
+        )
 
         df_pay_eligible = df_pay[
             df_pay["STATUS"].str.strip().isin(["Delivered", "Partial Delivery"])
         ].copy()
+        df_pay_eligible["_del_qty"]  = df_pay_eligible["Delivered Qty"].apply(clean_number)
+        df_pay_eligible["_price"]    = df_pay_eligible[price_col_pay].apply(clean_number)
+        df_pay_eligible["_billed"]   = df_pay_eligible["_del_qty"] * df_pay_eligible["_price"]
+        df_pay_eligible["_received"] = df_pay_eligible["Amount Received"].apply(clean_number)
 
         if df_pay_eligible.empty:
             st.info("No delivered orders to update.")
         else:
-            order_options = {}
-            for order_id, grp in df_pay_eligible.groupby("Order ID"):
-                shop  = grp["Shop Name"].iloc[0]
-                label = f"Order {order_id} — {shop}"
-                order_options[label] = str(order_id)
-
-            selected_label = st.selectbox(
-                "🔍 Search Order",
-                options=list(order_options.keys()),
+            # ── Shop selector ──
+            shop_list = sorted(df_pay_eligible["Shop Name"].dropna().unique().tolist())
+            selected_shop_pay = st.selectbox(
+                "🏪 Select Shop",
+                options=shop_list,
                 index=None,
-                placeholder="Type order ID or shop name...",
-                key="pay_order_select"
+                placeholder="Type shop name...",
+                key="pay_shop_select"
             )
 
-            if selected_label:
-                selected_order_id = order_options[selected_label]
-                order_rows = df_pay_eligible[
-                    df_pay_eligible["Order ID"].astype(str) == selected_order_id
+            if selected_shop_pay:
+                shop_orders = df_pay_eligible[
+                    df_pay_eligible["Shop Name"] == selected_shop_pay
                 ].copy()
 
-                shop_name_disp = order_rows["Shop Name"].iloc[0]
-                agent_disp     = order_rows["Agent Name"].iloc[0]
-                is_partial     = order_rows["STATUS"].str.strip().eq("Partial Delivery").any()
+                # ── Aggregate per order ──
+                order_summary = []
+                for order_id, grp in shop_orders.groupby("Order ID"):
+                    billed   = grp["_billed"].sum()
+                    # Amount Received is stored identically on all rows of an order
+                    # — read from first row only to avoid multiplying
+                    received = clean_number(grp["Amount Received"].iloc[0])
+                    balance  = max(billed - received, 0)
+                    pay_stat = str(grp["Payment Status"].iloc[0]).strip()
+                    # delivery date for FIFO sorting
+                    if "Delivery Date" in grp.columns:
+                        dated = grp[grp["Delivery Date"].notna()]
+                        raw_date = dated["Delivery Date"].max() if not dated.empty else pd.NaT
+                        del_date = pd.to_datetime(raw_date, dayfirst=True, errors="coerce") if pd.notna(raw_date) else pd.NaT
+                    else:
+                        del_date = pd.NaT
+                    if balance > 0:
+                        order_summary.append({
+                            "order_id":  str(order_id),
+                            "billed":    billed,
+                            "received":  received,
+                            "balance":   balance,
+                            "status":    pay_stat,
+                            "del_date":  del_date,
+                        })
 
-                # ── Safely detect price column (handles encoding variants) ──
-                price_col = next(
-                    (c for c in order_rows.columns if "price" in c.lower() and "quintal" in c.lower()),
-                    "Price (₹/Quintal)"
-                )
+                # total outstanding for this shop
+                # include fully received orders in billed/received totals but not balance
+                all_orders_billed = []
+                all_orders_recv   = []
+                for order_id, grp in shop_orders.groupby("Order ID"):
+                    all_orders_billed.append(grp["_billed"].sum())
+                    all_orders_recv.append(clean_number(grp["Amount Received"].iloc[0]))
+                total_balance = sum(o["balance"] for o in order_summary)
+                total_billed  = sum(all_orders_billed)
+                total_recv    = sum(all_orders_recv)
 
-                # ── Compute totals ──
-                order_rows["_delivered"] = order_rows["Delivered Qty"].apply(clean_number)
-                order_rows["_price"]     = order_rows[price_col].apply(clean_number)
-                order_rows["_ordered"]   = order_rows["Quantity (Quintal)"].apply(clean_number)
-                order_rows["_del_val"]   = order_rows["_delivered"] * order_rows["_price"]
-                order_rows["_ord_val"]   = order_rows["_ordered"]  * order_rows["_price"]
+                # ── Show order breakdown table ──
+                if not order_summary:
+                    st.success(f"🎉 No outstanding payments for {selected_shop_pay}!")
+                else:
+                    # sort by delivery date FIFO (oldest first)
+                    def sort_key(x):
+                        try:
+                            d = pd.to_datetime(x["del_date"], dayfirst=True, errors="coerce")
+                            return (pd.isna(d), d if pd.notna(d) else pd.Timestamp.max)
+                        except Exception:
+                            return (True, pd.Timestamp.max)
+                    order_summary_sorted = sorted(order_summary, key=sort_key)
 
-                total_delivered_val = order_rows["_del_val"].sum()
-                total_ordered_val   = order_rows["_ord_val"].sum()
-                total_delivered_qty = order_rows["_delivered"].sum()
-                total_ordered_qty   = order_rows["_ordered"].sum()
+                    rows_html = ""
+                    for o in order_summary_sorted:
+                        billed_fmt   = format_inr(o["billed"])
+                        received_fmt = format_inr(o["received"])
+                        balance_fmt  = format_inr(o["balance"])
+                        pay_stat     = o["status"]
+                        if pay_stat.lower() == "partial":
+                            badge_bg, badge_color, badge_text = "#FAEEDA", "#854F0B", "Partial"
+                        elif pay_stat.lower() == "received":
+                            badge_bg, badge_color, badge_text = "#EAF3DE", "#3B6D11", "Received"
+                        else:
+                            badge_bg, badge_color, badge_text = "#FCEBEB", "#A32D2D", "Pending"
+                        try:
+                            del_d = pd.to_datetime(o["del_date"], dayfirst=True, errors="coerce")
+                            date_str = del_d.strftime("%d-%m-%Y") if pd.notna(del_d) else "—"
+                        except Exception:
+                            date_str = "—"
+                        rows_html += f"""
+                        <tr style="border-bottom:0.5px solid #e8e0d0;">
+                            <td style="padding:9px 12px; font-size:13px; font-weight:600; color:#1a1a1a;">Order {o["order_id"]}</td>
+                            <td style="padding:9px 12px; font-size:13px; color:#333; text-align:center;">{date_str}</td>
+                            <td style="padding:9px 12px; font-size:13px; font-weight:600; color:#1a1a1a; text-align:right;">&#8377;{billed_fmt}</td>
+                            <td style="padding:9px 12px; font-size:13px; color:#3B6D11; font-weight:600; text-align:right;">&#8377;{received_fmt}</td>
+                            <td style="padding:9px 12px; font-size:14px; font-weight:700; color:#8B1A1A; text-align:right;">&#8377;{balance_fmt}</td>
+                            <td style="padding:9px 12px; text-align:center;">
+                                <span style="background:{badge_bg}; color:{badge_color}; font-size:11px; font-weight:700; padding:3px 9px; border-radius:20px;">{badge_text}</span>
+                            </td>
+                        </tr>"""
 
-                # Current overall payment status (use first row as representative)
-                current_pay = str(order_rows["Payment Status"].iloc[0]).strip().lower()
-                current_idx = 1 if current_pay == "received" else 0
+                    total_billed_fmt  = format_inr(total_billed)
+                    total_recv_fmt    = format_inr(total_recv)
+                    total_balance_fmt = format_inr(total_balance)
 
-                # ── Order summary card ──
-                partial_note = ""
-                if is_partial:
-                    pending_qty = total_ordered_qty - total_delivered_qty
-                    partial_note = f'<div style="margin-top:6px; font-size:12px; color:#f39c12; font-weight:600;">⚠️ Partial delivery — {total_delivered_qty:g}Q of {total_ordered_qty:g}Q delivered. {pending_qty:g}Q still pending.</div>'
-
-                variety_rows_html = ""
-                for _, vrow in order_rows.iterrows():
-                    d_qty = clean_number(vrow["Delivered Qty"])
-                    if d_qty <= 0:
-                        continue
-                    price_val  = clean_number(vrow[price_col])
-                    d_val      = d_qty * price_val
-                    # pre-format all numbers to avoid f-string CSS brace conflicts
-                    d_qty_fmt  = f"{d_qty:g}"
-                    price_fmt  = f"{format_inr(price_val)}"
-                    d_val_fmt  = f"{format_inr(d_val)}"
-                    variety_rows_html += f"""
-                    <div style="display:flex; justify-content:space-between; padding:4px 0;
-                                border-bottom:1px solid #f0e8d0; font-size:13px; color:#555;">
-                        <span>{vrow["Variety"]}</span>
-                        <span>{d_qty_fmt} Q &times; &#8377;{price_fmt} = <b style="color:#2b2b2b;">&#8377;{d_val_fmt}</b></span>
+                    table_html = f"""
+                    <div style="border-radius:10px; overflow:hidden; border:0.5px solid #e0d8c8; margin-bottom:4px;">
+                        <table style="width:100%; border-collapse:collapse; font-family:sans-serif;">
+                            <thead>
+                                <tr style="background:#f5edd6; border-bottom:1px solid #e0d8c8;">
+                                    <th style="padding:9px 12px; font-size:12px; font-weight:700; color:#4A3510; text-align:left;">Order</th>
+                                    <th style="padding:9px 12px; font-size:12px; font-weight:700; color:#4A3510; text-align:center;">Delivery</th>
+                                    <th style="padding:9px 12px; font-size:12px; font-weight:700; color:#4A3510; text-align:right;">Billed</th>
+                                    <th style="padding:9px 12px; font-size:12px; font-weight:700; color:#4A3510; text-align:right;">Received</th>
+                                    <th style="padding:9px 12px; font-size:12px; font-weight:700; color:#4A3510; text-align:right;">Balance</th>
+                                    <th style="padding:9px 12px; font-size:12px; font-weight:700; color:#4A3510; text-align:center;">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>{rows_html}</tbody>
+                            <tfoot>
+                                <tr style="background:#f5edd6; border-top:1.5px solid #c8b56e;">
+                                    <td colspan="2" style="padding:9px 12px; font-size:13px; font-weight:700; color:#4A3510;">Total</td>
+                                    <td style="padding:9px 12px; font-size:13px; font-weight:700; color:#1a1a1a; text-align:right;">&#8377;{total_billed_fmt}</td>
+                                    <td style="padding:9px 12px; font-size:13px; font-weight:700; color:#3B6D11; text-align:right;">&#8377;{total_recv_fmt}</td>
+                                    <td style="padding:9px 12px; font-size:15px; font-weight:700; color:#8B1A1A; text-align:right;">&#8377;{total_balance_fmt}</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
                     </div>"""
+                    tbl_height = len(order_summary) * 46 + 90
+                    components.html(FONT_STYLE + table_html, height=tbl_height, scrolling=False)
 
-                # pre-format total to avoid f-string CSS brace conflicts
-                total_del_fmt = f"{format_inr(total_delivered_val)}"
-                st.markdown(f"""
-                <div style="background:white; border-radius:12px; padding:16px 18px; margin-bottom:12px;
-                            box-shadow:0 2px 10px rgba(0,0,0,0.07); border-left:4px solid #8B6F2F;">
-                    <div style="font-weight:700; font-size:16px; color:#2b2b2b;">
-                        Order {selected_order_id} &nbsp;&middot;&nbsp;
-                        <span style="color:#8B6F2F;">{shop_name_disp}</span>
-                    </div>
-                    <div style="font-size:12px; color:#888; margin-top:2px;">Agent: {agent_disp}</div>
-                    <div style="margin-top:10px;">{variety_rows_html}</div>
-                    <div style="display:flex; justify-content:space-between; margin-top:10px;
-                                font-size:14px; font-weight:700; color:#4A7C59;">
-                        <span>&#128176; Amount for delivered qty:</span>
-                        <span>&#8377;{total_del_fmt}</span>
-                    </div>
-                    {partial_note}
-                </div>""", unsafe_allow_html=True)
+                    st.markdown("")
+                    st.markdown("##### 💰 Enter Payment Received")
+                    amount_input = st.number_input(
+                        f"Amount received from {selected_shop_pay} today (₹)",
+                        min_value=0.0, step=100.0,
+                        key="pay_amount_input"
+                    )
 
-                # ── Single payment status selector for whole order ──
-                new_pay_status = st.selectbox(
-                    "💳 Payment received for delivered qty?",
-                    options=["Pending", "Received"],
-                    index=current_idx,
-                    key=f"pay_status_order_{selected_order_id}"
-                )
+                    if st.button("💾 Apply Payment (FIFO by delivery date)", type="primary", key="save_payment_btn"):
+                        if amount_input <= 0:
+                            st.error("Please enter an amount greater than 0.")
+                        else:
+                            # ── Read fresh sheet data ──
+                            sheet_data_w = items_sheet.get_all_values()
+                            raw_hdrs     = sheet_data_w[0]
+                            hdrs         = [h.strip() for h in raw_hdrs]
+                            df_w         = pd.DataFrame(sheet_data_w[1:], columns=hdrs)
+                            df_w         = df_w.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+                            if "Payment Status" not in df_w.columns:
+                                df_w["Payment Status"] = "Pending"
+                            if "Amount Received" not in df_w.columns:
+                                df_w["Amount Received"] = "0"
 
-                st.markdown("")
-                if st.button("💾 Save Payment Status", type="primary", key="save_payment_btn"):
-                    sheet_data_write = items_sheet.get_all_values()
-                    raw_hdrs         = sheet_data_write[0]
-                    hdrs             = [h.strip() for h in raw_hdrs]
-                    df_write         = pd.DataFrame(sheet_data_write[1:], columns=hdrs)
-                    df_write         = df_write.applymap(lambda x: x.strip() if isinstance(x, str) else x)
-                    if "Payment Status" not in df_write.columns:
-                        df_write["Payment Status"] = "Pending"
-                    # Apply same status to ALL rows of this order that have delivered qty > 0
-                    order_mask = df_write["Order ID"].astype(str).str.strip() == selected_order_id
-                    df_write.loc[order_mask, "Payment Status"] = new_pay_status
-                    df_write = df_write.replace([float("inf"), -float("inf")], "").fillna("")
-                    rows_out = [[str(v) if v != "" else "" for v in r] for r in df_write.values.tolist()]
-                    items_sheet.update("A1", [raw_hdrs] + rows_out, value_input_option="USER_ENTERED")
-                    load_admin_data.clear()
-                    st.success(f"✅ Payment marked as {new_pay_status} for Order {selected_order_id}!")
-                    st.rerun()
+                            remaining = float(amount_input)
+
+                            # ── Apply FIFO: oldest delivery date first ──
+                            for o in order_summary_sorted:
+                                if remaining <= 0:
+                                    break
+                                order_mask = df_w["Order ID"].astype(str).str.strip() == o["order_id"]
+                                current_recv = clean_number(df_w.loc[order_mask, "Amount Received"].iloc[0]) if order_mask.any() else 0
+                                pay_now      = min(remaining, o["balance"])
+                                new_recv     = current_recv + pay_now
+                                new_balance  = o["billed"] - new_recv
+                                remaining   -= pay_now
+
+                                if new_balance <= 0.01:
+                                    new_status = "Received"
+                                elif new_recv > 0:
+                                    new_status = "Partial"
+                                else:
+                                    new_status = "Pending"
+
+                                df_w.loc[order_mask, "Amount Received"] = str(round(new_recv, 2))
+                                df_w.loc[order_mask, "Payment Status"]  = new_status
+
+                            df_w = df_w.replace([float("inf"), -float("inf")], "").fillna("")
+                            rows_out = [[str(v) if v != "" else "" for v in r] for r in df_w.values.tolist()]
+                            items_sheet.update("A1", [raw_hdrs] + rows_out, value_input_option="USER_ENTERED")
+                            load_admin_data.clear()
+
+                            applied = float(amount_input) - remaining
+                            if remaining > 0:
+                                excess_fmt = format_inr(remaining)
+                                st.success(f"✅ ₹{format_inr(applied)} applied. ₹{excess_fmt} exceeds total balance — please verify.")
+                            else:
+                                st.success(f"✅ ₹{format_inr(applied)} applied successfully using FIFO!")
+                            st.rerun()
 
         st.markdown("---")
 
         # ── Outstanding by Shop ──
-        st.markdown("#### 🏪 Outstanding Amount by Shop")
+        st.markdown("#### ⏰ Payment Due Tracker")
+        st.caption("Shops with outstanding payments — sorted by unpaid amount. Colour coded by days since last delivery.")
         today = pd.Timestamp(datetime.now().date())
+        # Include ALL delivered/partial rows — even those missing a delivery date
         due_eligible = df_all[
-            (df_all["STATUS"].str.strip().isin(["Delivered", "Partial Delivery"])) &
-            (df_all["Delivery Date"].notna())
+            df_all["STATUS"].str.strip().isin(["Delivered", "Partial Delivery"])
         ].copy()
 
         if not due_eligible.empty:
-            due_eligible["Days Since Delivery"] = (today - due_eligible["Delivery Date"]).dt.days
-            shop_outstanding = {}
-            for (order_id, shop, agent), grp in due_eligible.groupby(["Order ID", "Shop Name", "Agent Name"]):
-                unpaid_rows = grp[grp["Payment Status"].str.strip().str.lower() != "received"]
-                if unpaid_rows.empty:
-                    continue
-                unpaid_val = (unpaid_rows["Delivered Qty"] * unpaid_rows["Price (₹/Quintal)"]).sum()
-                if shop not in shop_outstanding:
-                    shop_outstanding[shop] = 0
-                shop_outstanding[shop] += unpaid_val
-
-            if shop_outstanding:
-                max_out = max(shop_outstanding.values())
-                for shop_name, amount in sorted(shop_outstanding.items(), key=lambda x: -x[1]):
-                    bar_pct = int((amount / max_out) * 100)
-                    amount_fmt = f"{format_inr(amount)}"
-                    st.markdown(f"""
-                    <div style="background:white; border-radius:10px; padding:12px 16px; margin-bottom:8px;
-                                box-shadow:0 2px 6px rgba(0,0,0,0.06); display:flex; align-items:center; gap:14px;">
-                        <div style="font-size:20px;">🏪</div>
-                        <div style="flex:1;">
-                            <div style="font-weight:600; font-size:15px; color:#2b2b2b;">{shop_name}</div>
-                            <div style="background:#fdecea; border-radius:4px; height:6px; margin-top:6px;">
-                                <div style="background:#e74c3c; width:{bar_pct}%; height:6px; border-radius:4px;"></div>
-                            </div>
-                        </div>
-                        <div style="font-size:16px; font-weight:700; color:#e74c3c; min-width:110px; text-align:right;">
-                            &#8377;{amount_fmt}
-                        </div>
-                    </div>""", unsafe_allow_html=True)
-            else:
-                st.success("🎉 No outstanding amounts!")
-
-        st.markdown("---")
-        st.markdown("#### ⏰ Payment Due Tracker")
-        st.caption("Delivered orders with outstanding payments — colour coded by urgency.")
-
-        if due_eligible.empty:
-            st.info("No delivered orders found.")
-        else:
-            # ── Group by Shop Name — aggregate all unpaid orders per shop ──
+            # ── Build unified shop-level due table ──
             shop_due = {}
             for shop, grp in due_eligible.groupby("Shop Name"):
                 unpaid_rows = grp[grp["Payment Status"].str.strip().str.lower() != "received"]
                 if unpaid_rows.empty:
                     continue
-                unpaid_value  = (unpaid_rows["Delivered Qty"] * unpaid_rows["Price (₹/Quintal)"]).sum()
-                total_value   = grp[total_col_a].sum() if total_col_a else 0
-                latest_date   = grp["Delivery Date"].max()
-                days_since    = (today - latest_date).days
+                # Delivered Qty is always filled — use it directly
+                # Subtract any Amount Received already recorded
+                if "Amount Received" not in grp.columns:
+                    grp = grp.copy()
+                    grp["Amount Received"] = "0"
+                billed_value = (
+                    unpaid_rows["Delivered Qty"].apply(clean_number) *
+                    unpaid_rows["Price (₹/Quintal)"].apply(clean_number)
+                ).sum()
+                # Amount Received is stored identically on all rows per order
+                # — sum first row per order to avoid multiplying
+                received_value = (
+                    grp.groupby("Order ID")["Amount Received"]
+                    .first()
+                    .apply(clean_number)
+                    .sum()
+                )
+                unpaid_value = max(billed_value - received_value, 0)
+                # Delivery date: use max of available dates; show — if none recorded
+                dated_rows = grp[grp["Delivery Date"].notna()]
+                if not dated_rows.empty:
+                    latest_date = dated_rows["Delivery Date"].max()
+                    days_since  = (today - latest_date).days
+                    date_str    = latest_date.strftime("%d-%m-%Y")
+                else:
+                    days_since  = 0
+                    date_str    = "—"
                 pending_orders = grp["Order ID"].nunique()
-                agent         = grp["Agent Name"].iloc[0]
+                agent          = grp["Agent Name"].iloc[0]
                 shop_due[shop] = {
-                    "shop":            shop,
-                    "agent":           agent,
-                    "latest_date":     latest_date.strftime("%Y-%m-%d"),
-                    "total_value":     total_value,
-                    "unpaid":          unpaid_value,
-                    "days":            days_since,
-                    "pending_orders":  pending_orders,
+                    "shop":           shop,
+                    "agent":          agent,
+                    "latest_date":    date_str,
+                    "unpaid":         unpaid_value,
+                    "days":           days_since,
+                    "pending_orders": pending_orders,
                 }
 
             if not shop_due:
-                st.success("🎉 All payments received!")
+                st.success("🎉 No outstanding amounts!")
             else:
                 due_rows_sorted = sorted(shop_due.values(), key=lambda x: -x["unpaid"])
+                grand_unpaid    = sum(r["unpaid"] for r in due_rows_sorted)
+                grand_fmt       = format_inr(grand_unpaid)
+
+                # ── Build table rows HTML ──
+                rows_html = ""
                 for r in due_rows_sorted:
+                    unpaid_fmt = format_inr(r["unpaid"])
                     if r["days"] > 15:
-                        bg, border, badge_text = "#fff5f5", "#e74c3c", f"🔴 Overdue {r['days']}d"
-                        badge_bg = "#e74c3c"
+                        badge_bg, badge_color, badge_text = "#FCEBEB", "#A32D2D", f"Overdue {r['days']}d"
+                        row_bg = "#fff8f8"
                     elif r["days"] > 7:
-                        bg, border, badge_text = "#fffbf0", "#f39c12", f"🟡 Due {r['days']}d"
-                        badge_bg = "#f39c12"
+                        badge_bg, badge_color, badge_text = "#FAEEDA", "#854F0B", f"Due {r['days']}d"
+                        row_bg = "#fffdf5"
                     else:
-                        bg, border, badge_text = "#f9f9f9", "#95a5a6", f"🟢 {r['days']}d"
-                        badge_bg = "#95a5a6"
-                    unpaid_fmt = format_inr(r['unpaid'])
-                    st.markdown(f"""
-                    <div style="background:{bg}; border-left:4px solid {border}; border-radius:8px;
-                                padding:12px 16px; margin-bottom:10px; box-shadow:0 1px 4px rgba(0,0,0,0.05);">
-                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
-                            <div>
-                                <span style="font-weight:700; font-size:16px; color:#2b2b2b;">🏪 {r["shop"]}</span>
-                                &nbsp;·&nbsp;<span style="color:#888; font-size:13px;">{r["agent"]}</span>
-                            </div>
-                            <span style="background:{badge_bg}; color:white; border-radius:4px; padding:2px 8px; font-size:11px;">{badge_text}</span>
-                        </div>
-                        <div style="display:flex; flex-wrap:wrap; gap:16px; margin-top:8px; font-size:13px; color:#666;">
-                            <span>📦 {r["pending_orders"]} pending order(s)</span>
-                            <span>📅 Last delivery: {r["latest_date"]}</span>
-                            <span style="font-weight:700; color:#e74c3c; font-size:15px;">💸 Unpaid: &#8377;{unpaid_fmt}</span>
-                        </div>
-                    </div>""", unsafe_allow_html=True)
+                        badge_bg, badge_color, badge_text = "#EAF3DE", "#3B6D11", f"{r['days']}d ago"
+                        row_bg = "#ffffff"
+
+                    rows_html += f"""
+                    <tr style="background:{row_bg}; border-bottom:0.5px solid #e8e0d0;">
+                        <td style="padding:10px 14px;">
+                            <div style="font-size:14px; font-weight:700; color:#1a1a1a;">{r["shop"]}</div>
+                            <div style="font-size:12px; font-weight:600; color:#555; margin-top:2px;">{r["agent"]}</div>
+                        </td>
+                        <td style="padding:10px 14px; font-size:14px; font-weight:600; color:#1a1a1a; text-align:center;">{r["pending_orders"]}</td>
+                        <td style="padding:10px 14px; font-size:13px; font-weight:600; color:#333; text-align:center;">{r["latest_date"]}</td>
+                        <td style="padding:10px 14px; text-align:center;">
+                            <span style="background:{badge_bg}; color:{badge_color}; font-size:12px; font-weight:700;
+                                         padding:4px 10px; border-radius:20px;">{badge_text}</span>
+                        </td>
+                        <td style="padding:10px 14px; font-size:15px; font-weight:700; color:#8B1A1A; text-align:right;">
+                            &#8377;{unpaid_fmt}
+                        </td>
+                    </tr>"""
+
+                table_html = f"""
+                <div style="border-radius:10px; overflow:hidden; border:0.5px solid #e0d8c8; margin-top:4px;">
+                    <table style="width:100%; border-collapse:collapse; font-family:sans-serif;">
+                        <thead>
+                            <tr style="background:#f5edd6; border-bottom:1px solid #e0d8c8;">
+                                <th style="padding:10px 14px; font-size:13px; font-weight:700; color:#4A3510; text-align:left;">Shop</th>
+                                <th style="padding:10px 14px; font-size:13px; font-weight:700; color:#4A3510; text-align:center;">Orders</th>
+                                <th style="padding:10px 14px; font-size:13px; font-weight:700; color:#4A3510; text-align:center;">Last Delivery</th>
+                                <th style="padding:10px 14px; font-size:13px; font-weight:700; color:#4A3510; text-align:center;">Status</th>
+                                <th style="padding:10px 14px; font-size:13px; font-weight:700; color:#4A3510; text-align:right;">Unpaid Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {rows_html}
+                        </tbody>
+                        <tfoot>
+                            <tr style="background:#f5edd6; border-top:1.5px solid #c8b56e;">
+                                <td colspan="4" style="padding:10px 14px; font-size:14px; font-weight:700; color:#4A3510;">
+                                    Total Outstanding
+                                </td>
+                                <td style="padding:10px 14px; font-size:16px; font-weight:700; color:#8B1A1A; text-align:right;">
+                                    &#8377;{grand_fmt}
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>"""
+                table_height = len(due_rows_sorted) * 56 + 90
+                components.html(FONT_STYLE + table_html, height=table_height, scrolling=False)
 
     # ══════════════════════════════
     # TAB 3 — EMPLOYEE PERFORMANCE
