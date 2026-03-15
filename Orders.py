@@ -947,12 +947,28 @@ elif selected == "🔐 Admin Page":
             "Price (₹/Quintal)"
         )
 
+        # detect Item Total column
+        item_total_col = next((c for c in df_pay.columns if "total" in c.lower()), None)
+
         df_pay_eligible = df_pay[
             df_pay["STATUS"].str.strip().isin(["Delivered", "Partial Delivery"])
         ].copy()
         df_pay_eligible["_del_qty"]  = df_pay_eligible["Delivered Qty"].apply(clean_number)
         df_pay_eligible["_price"]    = df_pay_eligible[price_col_pay].apply(clean_number)
-        df_pay_eligible["_billed"]   = df_pay_eligible["_del_qty"] * df_pay_eligible["_price"]
+        # Use Item Total directly if available — avoids recalculation errors
+        # For Partial Delivery rows, Item Total reflects full order; use Delivered Qty × Price instead
+        def calc_billed(row):
+            status = str(row["STATUS"]).strip()
+            if status == "Partial Delivery":
+                return clean_number(row["Delivered Qty"]) * clean_number(row[price_col_pay])
+            elif item_total_col:
+                val = clean_number(row[item_total_col])
+                # fallback to Delivered Qty × Price if Item Total is 0
+                if val == 0:
+                    return clean_number(row["Delivered Qty"]) * clean_number(row[price_col_pay])
+                return val
+            return clean_number(row["Delivered Qty"]) * clean_number(row[price_col_pay])
+        df_pay_eligible["_billed"]   = df_pay_eligible.apply(calc_billed, axis=1)
         df_pay_eligible["_received"] = df_pay_eligible["Amount Received"].apply(clean_number)
 
         if df_pay_eligible.empty:
@@ -1057,8 +1073,8 @@ elif selected == "🔐 Admin Page":
                     total_balance_fmt = format_inr(total_balance)
 
                     table_html = f"""
-                    <div style="border-radius:10px; overflow:hidden; border:0.5px solid #e0d8c8; margin-bottom:4px;">
-                        <table style="width:100%; border-collapse:collapse; font-family:sans-serif;">
+                    <div style="border-radius:10px; overflow-x:auto; border:0.5px solid #e0d8c8; margin-bottom:4px; -webkit-overflow-scrolling:touch;">
+                        <table style="min-width:520px; width:100%; border-collapse:collapse; font-family:sans-serif;">
                             <thead>
                                 <tr style="background:#f5edd6; border-bottom:1px solid #e0d8c8;">
                                     <th style="padding:9px 12px; font-size:12px; font-weight:700; color:#4A3510; text-align:left;">Order</th>
@@ -1082,7 +1098,7 @@ elif selected == "🔐 Admin Page":
                         </table>
                     </div>"""
                     tbl_height = len(order_summary) * 46 + 90
-                    components.html(FONT_STYLE + table_html, height=tbl_height, scrolling=False)
+                    components.html(FONT_STYLE + table_html, height=tbl_height, scrolling=True)
 
                     st.markdown("")
                     st.markdown("##### 💰 Enter Payment Received")
@@ -1166,12 +1182,20 @@ elif selected == "🔐 Admin Page":
                 if "Amount Received" not in grp.columns:
                     grp = grp.copy()
                     grp["Amount Received"] = "0"
-                billed_value = (
-                    unpaid_rows["Delivered Qty"].apply(clean_number) *
-                    unpaid_rows["Price (₹/Quintal)"].apply(clean_number)
-                ).sum()
-                # Amount Received is stored identically on all rows per order
-                # — sum first row per order to avoid multiplying
+                # Use Item Total directly for Delivered orders; Delivered Qty × Price for Partial
+                item_total_col_dt = next((c for c in unpaid_rows.columns if "total" in c.lower()), None)
+                def calc_billed_dt(row):
+                    status = str(row["STATUS"]).strip()
+                    if status == "Partial Delivery":
+                        return clean_number(row["Delivered Qty"]) * clean_number(row["Price (₹/Quintal)"])
+                    elif item_total_col_dt:
+                        val = clean_number(row[item_total_col_dt])
+                        if val == 0:
+                            return clean_number(row["Delivered Qty"]) * clean_number(row["Price (₹/Quintal)"])
+                        return val
+                    return clean_number(row["Delivered Qty"]) * clean_number(row["Price (₹/Quintal)"])
+                billed_value = unpaid_rows.apply(calc_billed_dt, axis=1).sum()
+                # Amount Received stored same on all rows per order — use first row per order only
                 received_value = (
                     grp.groupby("Order ID")["Amount Received"]
                     .first()
@@ -1238,8 +1262,8 @@ elif selected == "🔐 Admin Page":
                     </tr>"""
 
                 table_html = f"""
-                <div style="border-radius:10px; overflow:hidden; border:0.5px solid #e0d8c8; margin-top:4px;">
-                    <table style="width:100%; border-collapse:collapse; font-family:sans-serif;">
+                <div style="border-radius:10px; overflow-x:auto; border:0.5px solid #e0d8c8; margin-top:4px; -webkit-overflow-scrolling:touch;">
+                    <table style="min-width:520px; width:100%; border-collapse:collapse; font-family:sans-serif;">
                         <thead>
                             <tr style="background:#f5edd6; border-bottom:1px solid #e0d8c8;">
                                 <th style="padding:10px 14px; font-size:13px; font-weight:700; color:#4A3510; text-align:left;">Shop</th>
@@ -1265,7 +1289,7 @@ elif selected == "🔐 Admin Page":
                     </table>
                 </div>"""
                 table_height = len(due_rows_sorted) * 56 + 90
-                components.html(FONT_STYLE + table_html, height=table_height, scrolling=False)
+                components.html(FONT_STYLE + table_html, height=table_height, scrolling=True)
 
     # ══════════════════════════════
     # TAB 3 — EMPLOYEE PERFORMANCE
