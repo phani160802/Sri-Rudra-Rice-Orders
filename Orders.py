@@ -1081,9 +1081,9 @@ elif selected == "🔐 Admin Page":
     with tab_sales:
 
         # ── Rice Variety Cards — FIX: scrollable, generous height for mobile ──
-        st.markdown("#### 🌾 Sales by Rice Variety")
+        st.markdown(f"#### 🌾 {_month_name} Sales by Rice Variety")
         variety_sales = (
-            df_all.groupby("Variety")
+            df_month.groupby("Variety")
             .agg(Total_Quintals=("Quantity (Quintal)", "sum"),
                  Total_Revenue=(total_col_a, "sum") if total_col_a else ("Quantity (Quintal)", "sum"))
             .sort_values("Total_Revenue", ascending=False).reset_index()
