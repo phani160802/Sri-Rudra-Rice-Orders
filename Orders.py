@@ -952,6 +952,7 @@ if selected == "📦 Orders Page":
 
                     load_all_records.clear()
                     st.session_state.pop(edit_count_key, None)
+                    st.session_state.pop("edit_order_select_page", None)
                     st.success(f"✅ Order {edit_order_id} updated successfully!")
                     st.rerun()
 
