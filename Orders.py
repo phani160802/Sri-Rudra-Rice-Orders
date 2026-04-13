@@ -480,6 +480,7 @@ if selected == "📦 Orders Page":
         st.markdown("### 📊 Orders Dashboard")
         records = items_sheet.get_all_records()
         df = pd.DataFrame(records)
+        df = df[df["Order ID"].astype(str).str.strip() != ""]  # add this line
         if df.empty:
             st.info("No orders found.")
             st.stop()
