@@ -68,7 +68,13 @@ SUMMARY_SHEET = "Orders_Summary"
 def clean_number(value) -> float:
     if value is None or value == "":
         return 0.0
-    return float(str(value).replace("₹", "").replace(",", "").strip())
+    cleaned = str(value).replace("₹", "").replace(",", "").strip()
+    if not cleaned or cleaned.lower() in ("quantity (quintal)", "price (₹/quintal)", "n/a", "none", "-", "—"):
+        return 0.0
+    try:
+        return float(cleaned)
+    except ValueError:
+        return 0.0
 
 def format_inr(value: float) -> str:
     """Format number in Indian numbering system: 12,34,567"""
