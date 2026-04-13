@@ -1047,13 +1047,23 @@ elif selected == "🔐 Admin Page":
         df_all[total_col_a] = df_all[total_col_a].apply(clean_number)
 
     st.markdown("---")
-    st.markdown("#### 💰 Overall Sales Summary")
-    total_revenue  = df_all[total_col_a].sum() if total_col_a else 0
-    total_quintals = df_all["Quantity (Quintal)"].sum()
-    total_orders   = df_all["Order ID"].nunique()
-    received_mask  = df_all["Payment Status"].str.strip().str.lower() == "received"
-    collected_rev  = df_all.loc[received_mask, total_col_a].sum() if total_col_a else 0
-    pending_rev    = total_revenue - collected_rev
+    # Current month filter for summary metrics
+    _now        = datetime.now()
+    _this_month = f"{_now.year}-{_now.month:02d}"
+    _month_name = MONTH_NAMES[_now.month - 1]
+    df_month    = df_all[df_all["Date"].dt.strftime("%Y-%m") == _this_month] if not df_all["Date"].isna().all() else df_all
+
+    st.markdown(f"#### 💰 {_month_name} Sales Summary")
+    total_revenue  = df_month[total_col_a].sum() if total_col_a else 0
+    total_quintals = df_month["Quantity (Quintal)"].sum()
+    total_orders   = df_month["Order ID"].nunique()
+    received_mask  = df_month["Payment Status"].str.strip().str.lower() == "received"
+    collected_rev  = df_month.loc[received_mask, total_col_a].sum() if total_col_a else 0
+    # Pending payments across ALL months (outstanding dues don't reset monthly)
+    all_received_mask = df_all["Payment Status"].str.strip().str.lower() == "received"
+    all_collected_rev = df_all.loc[all_received_mask, total_col_a].sum() if total_col_a else 0
+    all_total_rev     = df_all[total_col_a].sum() if total_col_a else 0
+    pending_rev       = all_total_rev - all_collected_rev
 
     c1, c2, c3, c4, c5 = st.columns(5)
     c1.metric("Total Orders",    total_orders)
