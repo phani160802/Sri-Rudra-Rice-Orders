@@ -56,7 +56,7 @@ selected = st.sidebar.radio(
 # =====================================================
 # CONSTANTS
 # =====================================================
-RICE_VARIETIES = ["HMT", "BPT", "JSR", "Broken", "RNR", "KNM","GK", "Other"]
+RICE_VARIETIES = ["HMT", "BPT", "JSR", "Broken", "RNR", "KNM", "Other"]
 STATUS_OPTIONS = ["Order Accepted", "Packed", "Out for Delivery", "Partial Delivery", "Delivered"]
 SHEET_KEY      = "1dA4A8nbdwS_wcKVb3dA5ofqDlACw07SL3i0mtPYSo0Q"
 ITEMS_SHEET    = "Order_Items"
@@ -848,24 +848,43 @@ if selected == "📦 Orders Page":
                 st.error("At least one item with quantity > 0 is required.")
             else:
                 target_ws = None
+                _search_error = ""
                 for ws in spreadsheet.worksheets():
                     name = ws.title
                     if is_monthly_sheet(name):
                         try:
-                            ws_vals     = ws.get_all_values()
+                            ws_vals = ws.get_all_values()
                             if len(ws_vals) < 2:
                                 continue
                             hdrs_ws     = [h.strip() for h in ws_vals[0]]
                             df_ws_check = pd.DataFrame(ws_vals[1:], columns=hdrs_ws)
                             df_ws_check = df_ws_check.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+                            # Check if Order ID column exists
+                            if "Order ID" not in df_ws_check.columns:
+                                continue
                             if edit_order_id in df_ws_check["Order ID"].astype(str).str.strip().values:
                                 target_ws = ws
                                 break
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            _search_error = str(e)
 
                 if target_ws is None:
-                    st.error("Could not find the sheet containing this order.")
+                    # Fallback: try matching by order ID in any sheet without strict column check
+                    for ws in spreadsheet.worksheets():
+                        if is_monthly_sheet(ws.title):
+                            try:
+                                ws_vals = ws.get_all_values()
+                                for row in ws_vals[1:]:
+                                    if len(row) > 1 and str(row[1]).strip() == str(edit_order_id).strip():
+                                        target_ws = ws
+                                        break
+                                if target_ws:
+                                    break
+                            except Exception:
+                                pass
+
+                if target_ws is None:
+                    st.error(f"Could not find the sheet containing order {edit_order_id}. Error: {_search_error}")
                 else:
                     ws_vals  = target_ws.get_all_values()
                     raw_hdrs = ws_vals[0]
