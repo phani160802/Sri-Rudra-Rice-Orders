@@ -56,7 +56,7 @@ selected = st.sidebar.radio(
 # =====================================================
 # CONSTANTS
 # =====================================================
-RICE_VARIETIES = ["HMT", "BPT", "JSR", "Broken", "RNR", "KNM", "Other"]
+RICE_VARIETIES = ["HMT", "BPT", "JSR", "Broken", "RNR", "KNM","GK", "Other"]
 STATUS_OPTIONS = ["Order Accepted", "Packed", "Out for Delivery", "Partial Delivery", "Delivered"]
 SHEET_KEY      = "1dA4A8nbdwS_wcKVb3dA5ofqDlACw07SL3i0mtPYSo0Q"
 ITEMS_SHEET    = "Order_Items"
