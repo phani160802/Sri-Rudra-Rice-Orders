@@ -661,7 +661,7 @@ if selected == "📦 Orders Page":
                             continue
                         hdrs_tmp = [h.strip() for h in ws_vals[0]]
                         df_tmp   = pd.DataFrame(ws_vals[1:], columns=hdrs_tmp)
-                        df_tmp   = df_tmp.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+                        df_tmp   = df_tmp.map(lambda x: x.strip() if isinstance(x, str) else x)
                         df_tmp["Order ID"] = df_tmp["Order ID"].astype(str).str.strip()
                         all_ws_map[name]   = {"ws": ws, "raw_headers": ws_vals[0], "df": df_tmp}
                     except Exception:
@@ -858,7 +858,7 @@ if selected == "📦 Orders Page":
                                 continue
                             hdrs_ws     = [h.strip() for h in ws_vals[0]]
                             df_ws_check = pd.DataFrame(ws_vals[1:], columns=hdrs_ws)
-                            df_ws_check = df_ws_check.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+                            df_ws_check = df_ws_check.map(lambda x: x.strip() if isinstance(x, str) else x)
                             # Check if Order ID column exists
                             if "Order ID" not in df_ws_check.columns:
                                 continue
@@ -890,7 +890,7 @@ if selected == "📦 Orders Page":
                     raw_hdrs = ws_vals[0]
                     hdrs     = [h.strip() for h in raw_hdrs]
                     df_ws    = pd.DataFrame(ws_vals[1:], columns=hdrs)
-                    df_ws    = df_ws.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+                    df_ws    = df_ws.map(lambda x: x.strip() if isinstance(x, str) else x)
                     df_ws    = df_ws[df_ws["Order ID"].astype(str).str.strip() != ""]
                     df_ws["Order ID"] = df_ws["Order ID"].astype(str).str.strip()
 
@@ -933,7 +933,7 @@ if selected == "📦 Orders Page":
                         sum_vals  = summary_sheet.get_all_values()
                         sum_hdrs  = [h.strip() for h in sum_vals[0]]
                         df_sum    = pd.DataFrame(sum_vals[1:], columns=sum_hdrs)
-                        df_sum    = df_sum.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+                        df_sum    = df_sum.map(lambda x: x.strip() if isinstance(x, str) else x)
                         df_sum["Order ID"] = df_sum["Order ID"].astype(str).str.strip()
                         mask_sum  = df_sum["Order ID"] == edit_order_id
                         if mask_sum.any():
@@ -1417,7 +1417,7 @@ elif selected == "🔐 Admin Page":
                                     raw_hdrs = ws_vals[0]
                                     hdrs     = [h.strip() for h in raw_hdrs]
                                     df_w     = pd.DataFrame(ws_vals[1:], columns=hdrs)
-                                    df_w     = df_w.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+                                    df_w     = df_w.map(lambda x: x.strip() if isinstance(x, str) else x)
                                     df_w     = df_w[df_w["Order ID"].astype(str).str.strip() != ""]
                                     if "Payment Status"  not in df_w.columns: df_w["Payment Status"]  = "Pending"
                                     if "Amount Received" not in df_w.columns: df_w["Amount Received"] = "0"
