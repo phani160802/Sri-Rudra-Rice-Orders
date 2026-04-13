@@ -105,11 +105,18 @@ def format_inr(value: float) -> str:
     return ("-" if value < 0 else "") + result
 
 
-def generate_order_id(sheet) -> str:
+def generate_order_id(ss) -> str:
+    """Scans all monthly sheets to find the global max order ID."""
     try:
-        values   = sheet.col_values(2)[1:]
-        existing = [int(v) for v in values if v.strip().isdigit()]
-        return str(max(existing) + 1) if existing else "1"
+        all_ids = []
+        for ws in ss.worksheets():
+            if is_monthly_sheet(ws.title):
+                try:
+                    values = ws.col_values(2)[1:]  # Order ID is column 2
+                    all_ids.extend([int(v) for v in values if str(v).strip().isdigit()])
+                except Exception:
+                    pass
+        return str(max(all_ids) + 1) if all_ids else "1"
     except Exception:
         return str(uuid.uuid4().int)[:8]
 
@@ -467,7 +474,7 @@ if selected == "📦 Orders Page":
                     st.error(e)
                 st.stop()
             monthly_ws = ensure_monthly_sheet(spreadsheet, items_sheet)
-            order_id   = generate_order_id(items_sheet)
+            order_id   = generate_order_id(spreadsheet)
             write_order_to_sheet(monthly_ws, summary_sheet, order_id, shop_name,
                                  contact_number, agent_name, valid_items, grand_total)
             load_shops.clear()
